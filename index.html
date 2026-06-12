@@ -7,6 +7,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
 :root{
   --bg:#F0F2F8;--bg2:#fff;--bg3:#f4f5f9;--bg4:#e8e9ef;
@@ -349,6 +351,13 @@ input[type=file]{display:none}
 }
 .modal-files{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--fg3);margin-top:10px}
 .modal-files .rhi{color:var(--accent)}
+.submit-err{
+  display:flex;align-items:center;gap:6px;
+  background:rgba(239,68,68,.1);color:var(--danger);
+  border-radius:10px;padding:9px 12px;
+  font-size:12px;margin-top:10px;line-height:1.5;
+}
+.submit-err.hidden{display:none}
 
 /* Buttons */
 .modal-btns{display:flex;flex-direction:column;gap:9px;margin-top:16px}
@@ -380,6 +389,110 @@ input[type=file]{display:none}
 @keyframes spin{to{transform:rotate(360deg)}}
 .submitting-txt{font-size:13px;color:var(--fg3);font-weight:500}
 
+/* ═══════════════════════════════════════════
+   LOCATION PICKER (full-screen map modal)
+═══════════════════════════════════════════ */
+#locationModal{align-items:stretch;z-index:70}
+.locpick-sheet{
+  position:relative;width:100%;height:100%;
+  background:var(--bg2);display:flex;flex-direction:column;
+  animation:fadeIn .2s var(--ease);
+}
+.locpick-head{
+  display:flex;align-items:center;gap:8px;
+  padding:14px 16px 10px;flex-shrink:0;
+  border-bottom:1px solid var(--border);
+}
+.locpick-title{display:flex;align-items:center;gap:7px;font-size:14.5px;font-weight:600;color:var(--fg);flex:1}
+.locpick-title .rhi{color:var(--accent)}
+.locpick-close{
+  width:30px;height:30px;border-radius:50%;border:none;
+  background:var(--bg3);color:var(--fg3);
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;font-size:15px;flex-shrink:0;
+  transition:all .15s;
+}
+.locpick-close:hover{background:var(--bg4);color:var(--fg)}
+.locpick-search{
+  display:flex;gap:8px;padding:10px 16px;flex-shrink:0;
+}
+.locpick-search input{
+  flex:1;border:1.5px solid var(--border);border-radius:50px;
+  padding:9px 14px;font-size:13px;font-family:var(--sans);
+  background:var(--bg3);color:var(--fg);outline:none;
+  transition:border-color .2s;
+}
+.locpick-search input:focus{border-color:var(--accent)}
+.locpick-search button{
+  width:38px;height:38px;border-radius:50%;border:none;
+  background:var(--accent);color:#fff;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;transition:all .15s;
+}
+.locpick-search button:hover{background:var(--accent2)}
+.locpick-search button svg{width:15px;height:15px;fill:#fff}
+.locpick-map{flex:1;min-height:160px;background:var(--bg3)}
+.locpick-controls{padding:12px 16px;display:flex;flex-direction:column;gap:10px;flex-shrink:0}
+.locpick-locate{
+  display:flex;align-items:center;justify-content:center;gap:7px;
+  border:1.5px solid var(--accent);border-radius:50px;
+  padding:9px 14px;font-size:13px;font-weight:500;color:var(--accent);
+  background:var(--accent-light);cursor:pointer;font-family:var(--sans);
+  transition:all .18s var(--ease);
+}
+.locpick-locate:hover{background:var(--accent);color:#fff}
+.locpick-locate:hover .rhi{color:#fff}
+.locpick-locate:active{transform:scale(.98)}
+.locpick-meta{display:flex;align-items:center;gap:8px}
+.locpick-coords{
+  font-family:monospace;font-size:11.5px;color:var(--fg3);
+  background:var(--bg3);border-radius:8px;padding:7px 10px;flex-shrink:0;
+}
+.locpick-gmaps{
+  display:flex;align-items:center;justify-content:center;gap:5px;
+  font-size:11.5px;color:var(--accent);text-decoration:none;
+  border:1px solid var(--border);border-radius:8px;padding:7px 10px;
+  white-space:nowrap;transition:background .15s;
+}
+.locpick-gmaps:hover{background:var(--accent-light)}
+.locpick-gmaps svg{width:12px;height:12px;fill:var(--accent)}
+.locpick-name{
+  border:1.5px solid var(--border);border-radius:10px;
+  padding:9px 12px;font-size:13px;font-family:var(--sans);
+  background:var(--bg3);color:var(--fg);outline:none;
+  transition:border-color .2s;
+}
+.locpick-name:focus{border-color:var(--accent)}
+.locpick-foot{display:flex;gap:9px;padding:0 16px 16px;flex-shrink:0}
+.locpick-foot .btn-modal{flex:1;margin-top:0}
+.locpick-foot .btn-cancel{background:var(--bg3);color:var(--fg2)}
+.locpick-foot .btn-cancel:hover{background:var(--bg4)}
+.locpick-hint{
+  position:absolute;left:50%;top:8px;transform:translateX(-50%);
+  background:rgba(17,17,27,.75);color:#fff;font-size:11px;
+  padding:5px 11px;border-radius:50px;z-index:500;
+  pointer-events:none;white-space:nowrap;
+}
+
+
+/* ── SUMMARY BAR (collapsed accordion, opens modal) ── */
+.summary-bar{
+  display:flex;align-items:center;gap:8px;
+  background:var(--accent-light);color:var(--accent);
+  padding:11px 16px;cursor:pointer;
+  border-top:1px solid var(--border);
+  font-size:13px;font-weight:500;flex-shrink:0;
+  transition:background .15s,color .15s;
+  animation:fadeUp .25s var(--ease) both;
+}
+.summary-bar:hover{background:var(--accent);color:#fff}
+.summary-bar:hover .rhi{color:#fff}
+.summary-bar:active{transform:scale(.99)}
+.summary-bar.hidden{display:none}
+.summary-bar-ico{display:flex;color:var(--accent)}
+.summary-bar:hover .summary-bar-ico{color:#fff}
+.summary-bar-txt{flex:1}
+.summary-bar-chev{font-size:11px;color:inherit}
 
 /* ── SAFE BADGE ── */
 .safe{
@@ -511,6 +624,13 @@ input[type=file]{display:none}
   <!-- ═══ CHAT BODY ═══ -->
   <div class="chat-body" id="chatBody"></div>
 
+  <!-- ═══ SUMMARY BAR (collapsed — tap to view data) ═══ -->
+  <div class="summary-bar hidden" id="summaryBar" onclick="openSummaryModal()">
+    <span class="summary-bar-ico" id="summaryBarIco"></span>
+    <span class="summary-bar-txt">สรุปข้อมูล</span>
+    <span class="summary-bar-chev">▾</span>
+  </div>
+
   <!-- ═══ SUCCESS ═══ -->
   <div class="success-screen" id="successScreen">
     <div class="s-ico">
@@ -590,6 +710,7 @@ input[type=file]{display:none}
           </table>
         </div>
         <div class="modal-files" id="modalFiles"></div>
+        <div class="submit-err hidden" id="submitErrMsg"></div>
         <div class="modal-btns">
           <button class="btn-modal btn-edit" id="btnEditTable" onclick="enableTableEdit()">
             <span id="iconEdit" style="display:flex"></span>แก้ไขข้อมูล
@@ -604,6 +725,43 @@ input[type=file]{display:none}
       <div class="modal-submitting hidden" id="modalSubmitting">
         <div class="spinner"></div>
         <div class="submitting-txt">กำลังส่งข้อมูล...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ LOCATION PICKER MODAL ═══ -->
+  <div class="modal-overlay hidden" id="locationModal">
+    <div class="locpick-sheet">
+      <div class="locpick-head">
+        <div class="locpick-title"><span id="iconLocTitle" style="display:flex"></span>เลือกตำแหน่งที่เกิดเหตุ</div>
+        <button class="locpick-close" onclick="pickerCancel()">✕</button>
+      </div>
+      <div class="locpick-search">
+        <input type="text" id="pickerSearchInput" placeholder="ค้นหาสถานที่ เช่น ชื่อสาขา, ถนน..." onkeydown="if(event.key==='Enter'){event.preventDefault();pickerSearch()}">
+        <button onclick="pickerSearch()" title="ค้นหา">
+          <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+        </button>
+      </div>
+      <div id="mapPicker" class="locpick-map"></div>
+      <div class="locpick-controls">
+        <button class="locpick-locate" onclick="pickerUseMyLocation()">
+          <svg class="rhi" viewBox="0 0 24 24"><path d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm8.94 3A8.994 8.994 0 0 0 13 3.06V1h-2v2.06A8.994 8.994 0 0 0 3.06 11H1v2h2.06A8.994 8.994 0 0 0 11 20.94V23h2v-2.06A8.994 8.994 0 0 0 20.94 13H23v-2h-2.06zM12 19c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z"/></svg>
+          ใช้ตำแหน่งของฉัน
+        </button>
+        <div class="locpick-meta">
+          <div class="locpick-coords" id="pickerCoords">—, —</div>
+          <a class="locpick-gmaps" id="pickerGmaps" href="#" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24"><path d="M14 3h7v7h-2V6.41l-9.29 9.3-1.42-1.42 9.3-9.29H14V3zM5 5h5v2H5v12h12v-5h2v7H3V5h2z"/></svg>
+            Google Maps
+          </a>
+        </div>
+        <input type="text" id="pickerName" class="locpick-name" placeholder="ชื่อสถานที่ (ถ้ามี) — แก้ไขได้">
+      </div>
+      <div class="locpick-foot">
+        <button class="btn-modal btn-cancel" onclick="pickerCancel()">ยกเลิก</button>
+        <button class="btn-modal btn-submit-modal" onclick="pickerSave()">
+          <span id="iconLocSave" style="display:flex"></span>บันทึกตำแหน่ง
+        </button>
       </div>
     </div>
   </div>
@@ -646,6 +804,8 @@ const CONFIG = {
   orgName:       'ฝ่ายตรวจสอบและกำกับดูแล',
   hotlineDisplay:'02-123-4567',
   hotlineTel:    '021234567',
+  // URL ของ PHP API สำหรับบันทึกข้อมูลเข้า DB (ดู api/submit.php + schema.sql)
+  apiEndpoint:   'https://YOUR-SERVER/api/submit.php',
 };
 
 /* ═══════════════════════════════════════════
@@ -657,8 +817,11 @@ const S = {
   gps: null,
   detail: '',
   contact: '',
+  name: '',       // ชื่อ-สกุล (แก้ได้ในตารางสรุป — ว่าง = Anonymous)
   files: [],
   typing: false,
+  _locTimer: null,    // 15s: waiting for user to type location
+  _gpsAutoTimer: null,// 5s: after follow-up, auto-open map picker
 };
 
 /* ═══════════════════════════════════════════
@@ -701,7 +864,7 @@ const STEPS = [
     key:'upload',
     label:'หลักฐานประกอบ',
     icon:'file-export',
-    bot:'คุณสามารถุแนบ รูป/วิดีโอ/ไฟล์ \nสำหรับร้องเรียนการทุจริตและพฤติกรรมโดยมิชอบ\n(หากไม่มีสามารถกดข้ามได้เลยค่ะ)',
+    bot:'คุณสามารถแนบ รูป/วิดีโอ/ไฟล์ \nสำหรับร้องเรียนการทุจริตและพฤติกรรมโดยมิชอบ\n(หากไม่มีสามารถกดข้ามได้เลยค่ะ)',
     chips:[{ic:'file-export',label:'ข้าม / ไม่มีหลักฐาน'}],
     uploadCard:true,
     input:false,
@@ -827,7 +990,7 @@ function addBubble(text,isUser=false,delay=0){
 /* ═══════════════════════════════════════════
    LOCATION SHARE CARD (sent as user bubble)
 ═══════════════════════════════════════════ */
-function addLocationCard(lat,lng,delay=0){
+function addLocationCard(lat,lng,delay=0,name='ตำแหน่งที่เลือก'){
   const cb=document.getElementById('chatBody');
   setTimeout(()=>{
     const row=document.createElement('div');
@@ -843,7 +1006,7 @@ function addLocationCard(lat,lng,delay=0){
           <div class="loc-pin"><svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg></div>
         </div>
         <div class="loc-info">
-          <div class="loc-addr">${ic('house-chimney',13)} ตำแหน่งปัจจุบัน (GPS)</div>
+          <div class="loc-addr">${ic('house-chimney',13)} ${escapeHtml(name)}</div>
           <div class="loc-coord">${lat}, ${lng}</div>
         </div>
       </div>`;
@@ -907,66 +1070,152 @@ function addGPSCard(cb){
   card.className='gps-card';card.id='gpsCard';
   card.innerHTML=`
     <div class="gps-ico"><svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg></div>
-    <div class="gps-txt"><div class="gt">ระบุตำแหน่ง GPS อัตโนมัติ</div><div class="gs">กดเพื่ออนุญาตการระบุตำแหน่ง</div></div>
+    <div class="gps-txt"><div class="gt">ระบุตำแหน่งบนแผนที่</div><div class="gs">กดเพื่อเปิดแผนที่และระบุตำแหน่ง GPS</div></div>
     <div class="gps-arr"><svg viewBox="0 0 24 24"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg></div>
   `;
-  card.onclick=()=>requestGPS(card);
+  card.onclick=()=>openLocationPicker();
   cb.appendChild(card);
   scrollBottom();
-  // Auto-attempt GPS silently
-  if(navigator.geolocation){
-    navigator.geolocation.getCurrentPosition(
-      pos=>fillGPS(pos,card),
-      ()=>{},
-      {timeout:5000}
-    );
-  }
+  // ไม่ auto-attempt ทันที — รอ 15 วิให้ผู้ใช้พิมพ์ก่อน (ดู locationFollowUp)
 }
 
-function requestGPS(card){
-  if(!navigator.geolocation){
-    card.querySelector('.gt').textContent='ไม่รองรับ GPS บนอุปกรณ์นี้';
-    return;
-  }
-  card.querySelector('.gt').textContent='กำลังระบุตำแหน่ง...';
-  card.querySelector('.gs').textContent='';
+/* ═══════════════════════════════════════════
+   LOCATION TIMERS — รอพิมพ์ 15 วิ → ถาม → รอ 5 วิ → เปิดแผนที่+ขอ GPS
+═══════════════════════════════════════════ */
+function clearLocTimers(){
+  if(S._locTimer){clearTimeout(S._locTimer);S._locTimer=null;}
+  if(S._gpsAutoTimer){clearTimeout(S._gpsAutoTimer);S._gpsAutoTimer=null;}
+}
+
+function locationFollowUp(){
+  S._locTimer=null;
+  // ถ้าผู้ใช้ตอบไปแล้ว หรือ GPS สำเร็จไปแล้ว ไม่ต้องถามซ้ำ
+  if(S.gps || !STEPS[S.step] || STEPS[S.step].key!=='location') return;
+  const cb=document.getElementById('chatBody');
+  (async()=>{
+    await showTyping(cb,1100);
+    addBubble('พอทราบชื่อสถานที่ไหมคะ?\nหากไม่ทราบ ระบบจะเปิดแผนที่ให้ระบุตำแหน่งนะคะ\nรบกวนกดอนุญาตการเข้าถึงตำแหน่งด้วยนะคะ');
+    S._gpsAutoTimer=setTimeout(()=>{
+      S._gpsAutoTimer=null;
+      if(S.gps || !STEPS[S.step] || STEPS[S.step].key!=='location') return;
+      openLocationPicker();
+    },5000);
+  })();
+}
+
+/* ═══════════════════════════════════════════
+   LOCATION PICKER (Leaflet map modal)
+═══════════════════════════════════════════ */
+let _map=null,_marker=null;
+const DEFAULT_LATLNG=[13.7563,100.5018]; // กรุงเทพฯ (ศูนย์กลาง ใช้เมื่อยังไม่ทราบตำแหน่ง)
+
+function openLocationPicker(){
+  clearLocTimers();
+  document.getElementById('iconLocTitle').innerHTML=ic('house-chimney',16);
+  document.getElementById('iconLocSave').innerHTML=ic('checkbox',16);
+  document.getElementById('locationModal').classList.remove('hidden');
+
+  requestAnimationFrame(()=>{
+    if(!_map){
+      _map=L.map('mapPicker',{zoomControl:true}).setView(DEFAULT_LATLNG,13);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+        attribution:'&copy; OpenStreetMap contributors',maxZoom:19
+      }).addTo(_map);
+      _marker=L.marker(DEFAULT_LATLNG,{draggable:true}).addTo(_map);
+      setPickerCoords(DEFAULT_LATLNG[0],DEFAULT_LATLNG[1]);
+      _marker.on('dragend',e=>{
+        const p=e.target.getLatLng();
+        setPickerCoords(p.lat,p.lng);
+        reverseGeocode(p.lat,p.lng);
+      });
+      _map.on('click',e=>{
+        _marker.setLatLng(e.latlng);
+        setPickerCoords(e.latlng.lat,e.latlng.lng);
+        reverseGeocode(e.latlng.lat,e.latlng.lng);
+      });
+    } else {
+      _map.invalidateSize();
+    }
+    // เปิดมาให้ลองหาตำแหน่งปัจจุบันก่อนเลย (ถ้าอนุญาต)
+    pickerUseMyLocation();
+  });
+}
+
+function setPickerCoords(lat,lng){
+  document.getElementById('pickerCoords').textContent=lat.toFixed(5)+', '+lng.toFixed(5);
+  document.getElementById('pickerGmaps').href=`https://www.google.com/maps?q=${lat},${lng}`;
+}
+
+function pickerUseMyLocation(){
+  if(!navigator.geolocation)return;
   navigator.geolocation.getCurrentPosition(
-    pos=>fillGPS(pos,card),
-    err=>{
-      card.querySelector('.gt').textContent='ไม่สามารถระบุตำแหน่งได้';
-      card.querySelector('.gs').textContent='กรุณาพิมพ์สถานที่ด้านบน';
+    pos=>{
+      const lat=pos.coords.latitude,lng=pos.coords.longitude;
+      _map.setView([lat,lng],16);
+      _marker.setLatLng([lat,lng]);
+      setPickerCoords(lat,lng);
+      reverseGeocode(lat,lng);
     },
-    {timeout:8000,enableHighAccuracy:true}
+    ()=>{/* ไม่ได้รับอนุญาต/หาไม่ได้ — ผู้ใช้ค้นหาหรือลากหมุดเองได้ */},
+    {enableHighAccuracy:true,timeout:8000}
   );
 }
 
-function fillGPS(pos,card){
-  if(S.gps) return; // already filled once
-  const lat=pos.coords.latitude.toFixed(5);
-  const lng=pos.coords.longitude.toFixed(5);
-  S.gps={lat,lng};
-  if(!S.location) S.location='ตำแหน่งปัจจุบัน (GPS)';
-  // collapse the prompt card smoothly
-  card.style.transition='opacity .2s,max-height .2s';
-  card.style.maxHeight=card.offsetHeight+'px';
-  requestAnimationFrame(()=>{
-    card.style.opacity='0';
-    card.style.maxHeight='0';
-    card.style.padding='0';
-    card.style.margin='0 0 0 36px';
-    card.style.border='none';
-  });
-  card.onclick=null;
-  setTimeout(()=>card.remove(),250);
-  // show as a shared-location bubble (user side)
-  addLocationCard(lat,lng,260);
+async function pickerSearch(){
+  const q=document.getElementById('pickerSearchInput').value.trim();
+  if(!q||!_map)return;
+  try{
+    const res=await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&q='+encodeURIComponent(q));
+    const data=await res.json();
+    if(data&&data[0]){
+      const lat=parseFloat(data[0].lat),lng=parseFloat(data[0].lon);
+      _map.setView([lat,lng],16);
+      _marker.setLatLng([lat,lng]);
+      setPickerCoords(lat,lng);
+      document.getElementById('pickerName').value=q;
+    }
+  }catch(e){/* network error — เงียบไว้ ผู้ใช้ลากหมุดเองได้ */}
+}
 
-  // If we're still on the location step, GPS counts as the answer →
-  // remove the "ไม่ทราบสถานที่" chip / hide input, then let the bot continue
+async function reverseGeocode(lat,lng){
+  try{
+    const res=await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18`);
+    const data=await res.json();
+    if(data&&data.display_name){
+      const parts=data.display_name.split(',').map(s=>s.trim());
+      document.getElementById('pickerName').value=parts.slice(0,2).join(', ');
+    }
+  }catch(e){/* เงียบไว้ — ผู้ใช้พิมพ์ชื่อเองได้ */}
+}
+
+function pickerCancel(){
+  document.getElementById('locationModal').classList.add('hidden');
+}
+
+function pickerSave(){
+  if(!_marker)return;
+  const ll=_marker.getLatLng();
+  const lat=ll.lat.toFixed(5),lng=ll.lng.toFixed(5);
+  const name=document.getElementById('pickerName').value.trim();
+  document.getElementById('locationModal').classList.add('hidden');
+  confirmLocation(lat,lng,name);
+}
+
+function confirmLocation(lat,lng,name){
+  if(S.gps) return; // ตอบไปแล้ว
+  clearLocTimers();
+  S.gps={lat,lng};
+  S.location=name||'ตำแหน่งที่เลือกจากแผนที่';
+  // show as a shared-location bubble (user side)
+  addLocationCard(lat,lng,160,S.location);
+
+  // ถ้ายังอยู่ขั้นตอนสถานที่ → ลบ chip/gps-card แล้วให้บอทถามคำถามถัดไป
   if(STEPS[S.step] && STEPS[S.step].key==='location'){
     removeChips();
+    const gc=document.getElementById('gpsCard');
+    if(gc) gc.remove();
     document.getElementById('ibar').classList.add('hidden');
-    setTimeout(()=>askStep(S.step+1),260+500);
+    setTimeout(()=>askStep(S.step+1),160+500);
   }
 }
 
@@ -1032,6 +1281,11 @@ function openSummaryModal(){
   },1300);
 }
 
+function closeSummaryModal(){
+  readTableEdits(); // เก็บค่าที่แก้ไว้ (ถ้ามี) ก่อนพับกลับไปดูแชท
+  document.getElementById('summaryModal').classList.add('hidden');
+}
+
 function populateSummaryTable(){
   const table=document.getElementById('sumTable');
   table.classList.remove('editable');
@@ -1040,7 +1294,7 @@ function populateSummaryTable(){
   const locVal = S.gps ? `${loc}<br><span style="font-family:monospace;font-size:10.5px">${S.gps.lat}, ${S.gps.lng}</span>` : loc;
 
   const vals={
-    name:    'ไม่ระบุชื่อ (Anonymous)',
+    name:    S.name||'ไม่ระบุชื่อ (Anonymous)',
     contact: S.contact||'ไม่ระบุ',
     location:locVal,
     detail:  S.detail||'—',
@@ -1061,7 +1315,7 @@ function enableTableEdit(){
   const table=document.getElementById('sumTable');
   table.classList.add('editable');
   const vals={
-    name:    '',
+    name:    S.name||'',
     contact: S.contact||'',
     location:S.location||'',
     detail:  S.detail||'',
@@ -1086,6 +1340,7 @@ function readTableEdits(){
   table.querySelectorAll('td input,td textarea').forEach(el=>{
     const v=el.value.trim();
     switch(el.dataset.field){
+      case 'name':     S.name=v;     break;
       case 'contact':  S.contact=v;  break;
       case 'location': S.location=v; break;
       case 'detail':   S.detail=v;   break;
@@ -1093,13 +1348,46 @@ function readTableEdits(){
   });
 }
 
-function submitFromModal(){
+async function submitFromModal(){
   readTableEdits();
+  document.getElementById('submitErrMsg').classList.add('hidden');
   document.getElementById('modalSubmitting').classList.remove('hidden');
-  setTimeout(()=>{
+
+  const caseNo=genCase();
+  const payload={
+    case:     caseNo,
+    name:     S.name||null,
+    contact:  S.contact||null,   // เบอร์โทร/อีเมล รวมกัน — ฝั่ง API จะแยกให้
+    location: S.location||null,
+    gps_lat:  S.gps?S.gps.lat:null,
+    gps_lng:  S.gps?S.gps.lng:null,
+    detail:   S.detail||null,
+    files_count: S.files.length,
+  };
+
+  // ขั้นต่ำ 700ms ให้เห็น spinner แม้ API จะตอบเร็วมาก
+  const minWait=new Promise(r=>setTimeout(r,700));
+
+  try{
+    const res=await fetch(CONFIG.apiEndpoint,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(payload),
+    });
+    if(!res.ok) throw new Error('เซิร์ฟเวอร์ตอบกลับ '+res.status);
+    const data=await res.json();
+    if(!data || data.success!==true) throw new Error((data&&data.message)||'บันทึกไม่สำเร็จ');
+
+    await minWait;
     document.getElementById('summaryModal').classList.add('hidden');
-    submitReport();
-  },1300);
+    submitReport(caseNo);
+  }catch(err){
+    await minWait;
+    document.getElementById('modalSubmitting').classList.add('hidden');
+    const e=document.getElementById('submitErrMsg');
+    e.innerHTML=`${ic('square-exclamation',14)} ส่งข้อมูลไม่สำเร็จ: ${escapeHtml(err.message)} — กรุณาลองใหม่อีกครั้งค่ะ`;
+    e.classList.remove('hidden');
+  }
 }
 
 /* ═══════════════════════════════════════════
@@ -1109,6 +1397,7 @@ async function askStep(n){
   if(n>=STEPS.length){showConfirm();return;}
   S.step=n;
   updateProgress(n);
+  clearLocTimers();
   const cb=document.getElementById('chatBody');
   const step=STEPS[n];
 
@@ -1126,14 +1415,19 @@ async function askStep(n){
     ibar.classList.add('hidden');
   }
 
-  if(step.chips){
-    setTimeout(()=>addChips(step.chips,cb),400);
-  }
   if(step.gpsCard){
-    setTimeout(()=>addGPSCard(cb),500);
+    setTimeout(()=>addGPSCard(cb),400);
+  }
+  if(step.chips){
+    setTimeout(()=>addChips(step.chips,cb),500);
   }
   if(step.uploadCard){
     setTimeout(()=>addUploadCard(cb),400);
+  }
+
+  // สถานที่: รอผู้ใช้พิมพ์ก่อน 15 วิ ถ้าไม่พิมพ์ค่อยถามแล้วดึง GPS
+  if(step.key==='location'){
+    S._locTimer=setTimeout(()=>locationFollowUp(),15000);
   }
 }
 
@@ -1147,8 +1441,9 @@ function handleChip(text){
   const step=STEPS[S.step];
   switch(step.key){
     case 'location':
-      S.location='ไม่ทราบสถานที่';
-      break;
+      // "ระบุตำแหน่ง GPS" → เปิดแผนที่ให้เลือกตำแหน่ง (pickerSave จะพาไปขั้นต่อไปเอง)
+      openLocationPicker();
+      return;
     case 'contact':
       S.contact='';
       break;
@@ -1175,6 +1470,7 @@ function sendText(){
   // Remove GPS card if present (user typed location manually)
   const gc=document.getElementById('gpsCard');
   if(gc&&STEPS[S.step].key==='location'){
+    clearLocTimers();
     gc.remove();
   }
 
@@ -1198,32 +1494,39 @@ async function showConfirm(){
   document.getElementById('ibar').classList.add('hidden');
 
   await showTyping(cb,1300);
-  addBubble('ขอบคุณค่ะ 🙏\nตรวจสอบข้อมูลด้านล่างก่อนส่งได้เลย');
-  setTimeout(()=>openSummaryModal(),700);
+  addBubble('ขอบคุณค่ะ 🙏\nแตะ "สรุปข้อมูล" ด้านล่างเพื่อตรวจสอบก่อนส่งนะคะ');
+
+  // แสดงแถบ "สรุปข้อมูล" แบบกดดูได้ — ไม่เด้ง modal อัตโนมัติ
+  const bar=document.getElementById('summaryBar');
+  document.getElementById('summaryBarIco').innerHTML=ic('terms-info',15);
+  bar.classList.remove('hidden');
 }
 
 /* ═══════════════════════════════════════════
    SUBMIT / RESTART
 ═══════════════════════════════════════════ */
-function submitReport(){
+function submitReport(caseNo){
   document.getElementById('ibar').classList.add('hidden');
   document.getElementById('safeBadge').style.display='none';
   document.getElementById('stepLabel').style.display='none';
   document.getElementById('stepdots').style.display='none';
   document.getElementById('chatBody').style.display='none';
+  document.getElementById('summaryBar').classList.add('hidden');
 
-  document.getElementById('caseNum').textContent=genCase();
+  document.getElementById('caseNum').textContent=caseNo||genCase();
   document.getElementById('copyBtn').innerHTML=ic('duplicate',14);
   document.getElementById('successScreen').classList.add('show');
 }
 
 function restartChat(){
-  S.step=0;S.location='';S.gps=null;S.detail='';S.contact='';S.files=[];
+  clearLocTimers();
+  S.step=0;S.location='';S.gps=null;S.detail='';S.contact='';S.name='';S.files=[];
   document.getElementById('chatBody').innerHTML='';
   document.getElementById('chatBody').style.display='';
   document.getElementById('stepLabel').style.display='';
   document.getElementById('stepdots').style.display='';
   document.getElementById('safeBadge').style.display='';
+  document.getElementById('summaryBar').classList.add('hidden');
   document.getElementById('successScreen').classList.remove('show');
   document.getElementById('ibar').classList.add('hidden');
   document.getElementById('summaryModal').classList.add('hidden');
@@ -1240,6 +1543,11 @@ document.addEventListener('DOMContentLoaded',()=>{
   initBranding();
   document.getElementById('ibar').classList.add('hidden');
   setTimeout(()=>askStep(0),300);
+
+  // แตะพื้นหลัง (นอกแผ่นชีต) ของ modal สรุปข้อมูล → พับกลับไปดูแชท
+  document.getElementById('summaryModal').addEventListener('click',e=>{
+    if(e.target.id==='summaryModal') closeSummaryModal();
+  });
 });
 </script>
 </body>
