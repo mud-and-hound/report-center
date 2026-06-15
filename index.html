@@ -74,7 +74,7 @@ html,body{height:100%;font-family:var(--sans);background:var(--primary);color:va
 
 /* ── HOTLINE BAR (urgent contact) ── */
 .hotline-bar{
-  display:none;;align-items:center;gap:8px;
+  display:flex;align-items:center;gap:8px;
   background:var(--primary2);
   padding:7px 16px;
   text-decoration:none;
@@ -353,6 +353,31 @@ input[type=file]{display:none}
 }
 .modal-files{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--fg3);margin-top:10px}
 .modal-files .rhi{color:var(--accent)}
+.file-grid{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.file-thumb{
+  position:relative;width:72px;height:72px;border-radius:10px;overflow:hidden;
+  border:1px solid var(--border);background:var(--bg3);flex-shrink:0;
+}
+.file-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.file-thumb .file-doc{
+  width:100%;height:100%;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:4px;color:var(--accent);padding:4px;
+}
+.file-thumb .file-doc span{font-size:8.5px;color:var(--fg3);text-align:center;word-break:break-all;line-height:1.2}
+.file-thumb .file-x{
+  position:absolute;top:3px;right:3px;width:20px;height:20px;border-radius:50%;
+  background:var(--danger);color:#fff;border:none;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;font-size:13px;line-height:1;
+  padding:0;box-shadow:0 1px 4px rgba(0,0,0,.3);
+}
+.file-thumb .file-x:hover{filter:brightness(1.1)}
+.file-add{
+  width:72px;height:72px;border-radius:10px;flex-shrink:0;cursor:pointer;
+  border:1.5px dashed var(--accent);background:var(--accent-light);
+  display:flex;align-items:center;justify-content:center;color:var(--accent);
+  font-size:28px;font-weight:300;transition:filter .15s;
+}
+.file-add:hover{filter:brightness(.97)}
 .submit-err{
   display:flex;align-items:center;gap:6px;
   background:rgba(239,68,68,.1);color:var(--danger);
@@ -561,7 +586,7 @@ input[type=file]{display:none}
 
 /* ── HOTLINE MINI (success screen, light bg) ── */
 .hotline-mini{
-  display:none;align-items:center;justify-content:center;gap:8px;
+  display:flex;align-items:center;justify-content:center;gap:8px;
   width:100%;background:#FEF3C7;color:#92400E;
   border-radius:50px;padding:10px 16px;
   font-size:12px;text-decoration:none;
@@ -586,9 +611,83 @@ input[type=file]{display:none}
   .app{max-width:100%;height:100dvh}
   body{background:var(--bg2)}
 }
+/* ═══ BRAND SELECT SCREEN ═══ */
+.brand-screen{
+  position:fixed;inset:0;z-index:200;
+  background:var(--bg);overflow-y:auto;
+  padding:48px 22px 40px;
+  animation:brandIn .4s var(--ease) both;
+}
+.brand-screen.hide{animation:brandOut .45s var(--ease) forwards}
+@keyframes brandIn{from{opacity:0}to{opacity:1}}
+@keyframes brandOut{to{opacity:0;transform:scale(1.03);visibility:hidden}}
+.brand-wrap{max-width:880px;margin:0 auto}
+.brand-head{
+  font-size:32px;font-weight:700;color:var(--fg);line-height:1.12;
+  letter-spacing:-.5px;margin:0 0 10px;
+  animation:fadeUp .5s var(--ease) both;
+}
+.brand-sub{
+  font-size:14px;color:var(--fg3);line-height:1.6;margin:0 0 26px;max-width:400px;
+  animation:fadeUp .5s var(--ease) .06s both;
+}
+.brand-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+@media(min-width:560px){.brand-grid{grid-template-columns:repeat(3,1fr)}}
+@media(min-width:780px){.brand-grid{grid-template-columns:repeat(4,1fr)}}
+.brand-card{
+  position:relative;overflow:hidden;cursor:pointer;
+  aspect-ratio:1/.82;border-radius:16px;
+  border:1px solid var(--border);background:var(--bg2);
+  display:flex;align-items:center;justify-content:center;
+  transition:transform .25s var(--ease),box-shadow .25s,border-color .25s;
+  animation:brandCard .5s var(--ease) both;
+  animation-delay:calc(var(--i) * .05s + .12s);
+}
+@keyframes brandCard{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+.brand-card:hover{transform:translateY(-4px);box-shadow:0 12px 28px rgba(0,0,0,.13);border-color:transparent}
+.brand-card:active{transform:translateY(-1px) scale(.98)}
+.brand-card::before{
+  content:'';position:absolute;inset:-2px;z-index:1;background:var(--bc);
+  transform:translateX(-108%) skewX(-8deg);transition:transform .4s var(--ease);
+}
+.brand-card:hover::before{transform:translateX(0) skewX(-8deg)}
+.brand-badge{
+  position:absolute;top:10px;right:10px;z-index:3;
+  font-size:9.5px;font-weight:600;letter-spacing:.5px;
+  padding:3px 8px;border-radius:20px;background:var(--bg3);color:var(--fg3);
+  transition:background .3s,color .3s;
+}
+.brand-card:hover .brand-badge{background:rgba(255,255,255,.25);color:#fff}
+.brand-initial{
+  position:relative;z-index:2;font-size:26px;font-weight:700;color:var(--fg3);
+  letter-spacing:.5px;transition:opacity .3s;
+}
+.brand-card:hover .brand-initial{opacity:0}
+.brand-reveal{
+  position:absolute;z-index:3;inset:0;
+  display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-end;
+  padding:14px;gap:6px;opacity:0;transform:translateY(8px);
+  transition:opacity .3s .12s,transform .3s .12s;
+}
+.brand-card:hover .brand-reveal{opacity:1;transform:translateY(0)}
+.brand-reveal-name{font-size:15px;font-weight:700;color:#fff;line-height:1.2}
+.brand-reveal-go{
+  font-size:11px;font-weight:600;color:#fff;display:flex;align-items:center;gap:4px;
+  background:rgba(255,255,255,.22);padding:5px 10px;border-radius:20px;
+}
 </style>
 </head>
 <body>
+
+<!-- ═══ BRAND SELECT SCREEN (shows first) ═══ -->
+<div class="brand-screen" id="brandScreen">
+  <div class="brand-wrap">
+    <h1 class="brand-head">เลือกแบรนด์ที่ต้องการแจ้ง</h1>
+    <p class="brand-sub">แต่ละแบรนด์มีหน้าแจ้งเบาะแสแยกกัน เลือกแบรนด์ที่เกี่ยวข้องเพื่อเริ่มแจ้งเรื่อง</p>
+    <div class="brand-grid" id="brandGrid"></div>
+  </div>
+</div>
+
 <div class="app" id="app">
 
   <!-- ═══ TOPBAR ═══ -->
@@ -705,6 +804,7 @@ input[type=file]{display:none}
         <div class="sum-table-wrap">
           <table class="sum-table" id="sumTable">
             <tbody>
+              <tr><th>แบรนด์</th><td data-field="brand"></td></tr>
               <tr><th>ชื่อ / เบอร์ / อีเมล</th><td data-field="contact"></td></tr>
               <tr><th>สถานที่ / สาขา</th><td data-field="location"></td></tr>
               <tr><th>เบาะแส</th><td data-field="detail"></td></tr>
@@ -804,17 +904,55 @@ function ic(name, w){
 ═══════════════════════════════════════════ */
 const CONFIG = {
   orgName:       'ฝ่ายตรวจสอบและกำกับดูแล',
-  hotlineDisplay:'',
-  hotlineTel:    '',
+  hotlineDisplay:'02-123-4567',
+  hotlineTel:    '021234567',
   // URL ของ PHP API สำหรับบันทึกข้อมูลเข้า DB (ดู api/submit.php + schema.sql)
   apiEndpoint:   'https://report.mobile1234.site/api/reports',
 };
+
+/* ═══ BRANDS — แก้รายชื่อแบรนด์ตรงนี้ ═══ */
+const BRANDS = [
+  {code:'GD',  name:"Dunkin'",            color:'#FF6B00'},
+  {code:'GHC', name:"Greyhound Cafe'",    color:'#1A1A1A'},
+  {code:'GH',  name:'Greyhound Original', color:'#6B6B6B'},
+  {code:'ABP', name:'Au Bon Pain',        color:'#D4A017'},
+  {code:'FF',  name:'Funky Fries',        color:'#1B3F8B'},
+  {code:'AHC', name:"Another Hound Cafe'",color:'#0D2B23'},
+  {code:'BE',  name:'Bean Hound',         color:'#8B7355'},
+];
+
+function renderBrands(){
+  const grid=document.getElementById('brandGrid');
+  grid.innerHTML=BRANDS.map((b,i)=>`
+    <div class="brand-card" style="--bc:${b.color};--i:${i}" onclick="selectBrand('${b.code}')">
+      <span class="brand-badge">${b.code}</span>
+      <span class="brand-initial">${b.code}</span>
+      <div class="brand-reveal">
+        <div class="brand-reveal-name">${escapeHtml(b.name)}</div>
+        <div class="brand-reveal-go">แจ้งเบาะแส ›</div>
+      </div>
+    </div>`).join('');
+}
+
+function selectBrand(code){
+  const b=BRANDS.find(x=>x.code===code);
+  if(!b)return;
+  S.brand=b;
+  const scr=document.getElementById('brandScreen');
+  scr.classList.add('hide');
+  setTimeout(()=>{
+    scr.style.display='none';
+    document.getElementById('ibar').classList.add('hidden');
+    askStep(0);
+  },450);
+}
 
 /* ═══════════════════════════════════════════
    STATE
 ═══════════════════════════════════════════ */
 const S = {
   step: 0,        // 0=location 1=detail 2=contact 3=upload → confirm
+  brand: null,    // แบรนด์ที่เลือก {code,name,color} — ดูอย่างเดียว แก้ไม่ได้
   location: '',
   gps: null,
   detail: '',
@@ -1239,7 +1377,17 @@ function addUploadCard(cb){
 
 function handleFileSelect(e){
   const files=Array.from(e.target.files);
+  e.target.value=''; // เคลียร์ เพื่อให้เลือกไฟล์เดิมซ้ำได้
   if(!files.length)return;
+
+  // ถ้ากดเพิ่มจากตารางสรุป (modal เปิดอยู่) → append แล้ว re-render grid เฉยๆ
+  const modalOpen=!document.getElementById('summaryModal').classList.contains('hidden');
+  if(modalOpen){
+    S.files=S.files.concat(files);
+    renderModalFiles();
+    return;
+  }
+
   S.files=files;
   removeChips();
   const card=document.getElementById('uploadCard');
@@ -1296,6 +1444,7 @@ function populateSummaryTable(){
   const locVal = S.gps ? `${loc}<br><span style="font-family:monospace;font-size:10.5px">${S.gps.lat}, ${S.gps.lng}</span>` : loc;
 
   const vals={
+    brand:   S.brand ? `${escapeHtml(S.brand.name)} <span style="color:var(--fg3)">(${S.brand.code})</span>` : '—',
     contact: S.contact||'ไม่ระบุ',
     location:locVal,
     detail:  S.detail||'—',
@@ -1304,12 +1453,43 @@ function populateSummaryTable(){
     td.innerHTML = vals[td.dataset.field] ?? '—';
   });
 
-  const filesEl=document.getElementById('modalFiles');
-  filesEl.innerHTML = S.files.length
-    ? `${ic('file-export',14)} ไฟล์แนบ: ${S.files.length} ไฟล์`
-    : `${ic('file-export',14)} ไฟล์แนบ: ไม่มี`;
+  renderModalFiles();
 
   document.getElementById('btnEditTable').classList.remove('hidden');
+}
+
+function renderModalFiles(){
+  const filesEl=document.getElementById('modalFiles');
+  let html = S.files.length
+    ? `${ic('file-export',14)} ไฟล์แนบ: ${S.files.length} ไฟล์`
+    : `${ic('file-export',14)} ไฟล์แนบ: ไม่มี`;
+  html += `<div class="file-grid" id="fileGrid"></div>`;
+  filesEl.innerHTML = html;
+
+  const grid=document.getElementById('fileGrid');
+  S.files.forEach((f,i)=>{
+    const t=document.createElement('div');
+    t.className='file-thumb';
+    if(f.type && f.type.startsWith('image/')){
+      const url=URL.createObjectURL(f);
+      t.innerHTML=`<img src="${url}" alt=""><button class="file-x" onclick="removeFile(${i})" title="ลบ">×</button>`;
+    } else {
+      t.innerHTML=`<div class="file-doc">${ic('file-export',22)}<span>${escapeHtml(f.name||'ไฟล์')}</span></div><button class="file-x" onclick="removeFile(${i})" title="ลบ">×</button>`;
+    }
+    grid.appendChild(t);
+  });
+  // ปุ่มเพิ่มไฟล์
+  const add=document.createElement('div');
+  add.className='file-add';
+  add.title='เพิ่มไฟล์';
+  add.textContent='+';
+  add.onclick=()=>document.getElementById('fileInput').click();
+  grid.appendChild(add);
+}
+
+function removeFile(i){
+  S.files.splice(i,1);
+  renderModalFiles();
 }
 
 function enableTableEdit(){
@@ -1322,6 +1502,11 @@ function enableTableEdit(){
   };
   document.querySelectorAll('#sumTable tbody td').forEach(td=>{
     const f=td.dataset.field;
+    if(f==='brand'){
+      // แบรนด์ดูอย่างเดียว — คงค่าเดิม ไม่ทำเป็นช่องกรอก
+      td.innerHTML = S.brand ? `${escapeHtml(S.brand.name)} <span style="color:var(--fg3)">(${S.brand.code})</span>` : '—';
+      return;
+    }
     const v=escapeHtml(vals[f]);
     if(f==='detail'){
       td.innerHTML=`<textarea rows="2" data-field="${f}">${v}</textarea>`;
@@ -1356,6 +1541,7 @@ async function submitFromModal(){
   const caseNo=genCase();
   const payload={
     case:     caseNo,
+    brand:    S.brand?S.brand.code:null,
     name:     S.name||null,
     contact:  S.contact||null,   // เบอร์โทร/อีเมล รวมกัน — ฝั่ง API จะแยกให้
     location: S.location||null,
@@ -1541,8 +1727,9 @@ function restartChat(){
 document.addEventListener('DOMContentLoaded',()=>{
   renderThemeIcon();
   initBranding();
+  renderBrands();                  // แสดงหน้าเลือกแบรนด์ก่อน
   document.getElementById('ibar').classList.add('hidden');
-  setTimeout(()=>askStep(0),300);
+  // ไม่เริ่มแชททันที — รอผู้ใช้เลือกแบรนด์ก่อน (selectBrand จะเรียก askStep(0))
 
   // แตะพื้นหลัง (นอกแผ่นชีต) ของ modal สรุปข้อมูล → พับกลับไปดูแชท
   document.getElementById('summaryModal').addEventListener('click',e=>{
