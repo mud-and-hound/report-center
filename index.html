@@ -601,7 +601,12 @@ input[type=file]{display:none}
   </div>
 
   <!-- ═══ HOTLINE BAR (urgent contact) ═══ -->
-  
+  <a class="hotline-bar" id="hotlineBar" href="#">
+    <span class="hotline-ico" id="hotlineIcoTop"></span>
+    <span class="hotline-txt">เหตุการณ์เร่งด่วน? โทรสายด่วน <b id="hotlineNumTop"></b></span>
+    <span class="hotline-arr">›</span>
+  </a>
+
   <!-- ═══ STEP LABEL ═══ -->
   <div class="step-label" id="stepLabel"></div>
 
@@ -646,6 +651,10 @@ input[type=file]{display:none}
       </div>
     </div>
     <div class="s-note">สามารถใช้เลขที่อ้างอิงเพื่อติดตามสถานะได้<br>ข้อมูลจะถูกประมวลผลภายใน 24–48 ชั่วโมง</div>
+    <a class="hotline-mini" id="hotlineMini" href="#">
+      <span class="hotline-mini-ico" id="hotlineIcoMini"></span>
+      ต้องการความช่วยเหลือเร่งด่วน? โทร <b id="hotlineNumMini"></b>
+    </a>
     <button class="btn-home" onclick="restartChat()">เริ่มใหม่</button>
   </div>
 
