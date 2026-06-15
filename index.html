@@ -705,8 +705,7 @@ input[type=file]{display:none}
         <div class="sum-table-wrap">
           <table class="sum-table" id="sumTable">
             <tbody>
-              <tr><th>ชื่อ-สกุล</th><td data-field="name"></td></tr>
-              <tr><th>เบอร์โทร / อีเมล</th><td data-field="contact"></td></tr>
+              <tr><th>ชื่อ / เบอร์ / อีเมล</th><td data-field="contact"></td></tr>
               <tr><th>สถานที่ / สาขา</th><td data-field="location"></td></tr>
               <tr><th>เบาะแส</th><td data-field="detail"></td></tr>
             </tbody>
@@ -1297,7 +1296,6 @@ function populateSummaryTable(){
   const locVal = S.gps ? `${loc}<br><span style="font-family:monospace;font-size:10.5px">${S.gps.lat}, ${S.gps.lng}</span>` : loc;
 
   const vals={
-    name:    S.name||'ไม่ระบุชื่อ (Anonymous)',
     contact: S.contact||'ไม่ระบุ',
     location:locVal,
     detail:  S.detail||'—',
@@ -1318,7 +1316,6 @@ function enableTableEdit(){
   const table=document.getElementById('sumTable');
   table.classList.add('editable');
   const vals={
-    name:    S.name||'',
     contact: S.contact||'',
     location:S.location||'',
     detail:  S.detail||'',
@@ -1328,8 +1325,8 @@ function enableTableEdit(){
     const v=escapeHtml(vals[f]);
     if(f==='detail'){
       td.innerHTML=`<textarea rows="2" data-field="${f}">${v}</textarea>`;
-    } else if(f==='name'){
-      td.innerHTML=`<input type="text" data-field="${f}" value="${v}" placeholder="ไม่ระบุชื่อ (Anonymous)">`;
+    } else if(f==='contact'){
+      td.innerHTML=`<input type="text" data-field="${f}" value="${v}" placeholder="ชื่อ / เบอร์ / อีเมล (ไม่ระบุก็ได้)">`;
     } else {
       td.innerHTML=`<input type="text" data-field="${f}" value="${v}">`;
     }
