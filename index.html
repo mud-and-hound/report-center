@@ -73,8 +73,7 @@ html,body{height:100%;font-family:var(--sans);background:var(--primary);color:va
 .topbar-theme svg{width:18px;height:18px;fill:currentColor}
 
 /* ── HOTLINE BAR (urgent contact) ── */
-.hotline-bar{display:none !important}
-.hotline-bar-OLD{
+.hotline-bar{
   display:flex;align-items:center;gap:8px;
   background:var(--primary2);
   padding:7px 16px;
@@ -586,8 +585,7 @@ input[type=file]{display:none}
 .s-note{font-size:12px;color:var(--fg4);line-height:1.6;margin-bottom:20px}
 
 /* ── HOTLINE MINI (success screen, light bg) ── */
-.hotline-mini{display:none !important}
-.hotline-mini-OLD{
+.hotline-mini{
   display:flex;align-items:center;justify-content:center;gap:8px;
   width:100%;background:#FEF3C7;color:#92400E;
   border-radius:50px;padding:10px 16px;
@@ -633,50 +631,50 @@ input[type=file]{display:none}
   font-size:14px;color:var(--fg3);line-height:1.6;margin:0 0 26px;max-width:400px;
   animation:fadeUp .5s var(--ease) .06s both;
 }
-.brand-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
-@media(min-width:260px){.brand-grid{grid-template-columns:repeat(3,1fr)}}
-@media(min-width:480px){.brand-grid{grid-template-columns:repeat(4,1fr)}}
+/* การ์ดเล็กลง: 3 คอลัมน์มือถือ / 4 จอใหญ่ */
+.brand-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+@media(min-width:620px){.brand-grid{grid-template-columns:repeat(4,1fr)}}
 .brand-card{
   position:relative;overflow:hidden;cursor:pointer;
-  aspect-ratio:1/.82;border-radius:16px;
-  border:1px solid var(--border);background:var(--bg2);
-  display:flex;align-items:center;justify-content:center;
-  transition:transform .25s var(--ease),box-shadow .25s,border-color .25s;
+  aspect-ratio:1/1;border-radius:14px;border:none;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:6px;padding:8px;text-align:center;
+  transition:transform .25s var(--ease),box-shadow .25s;
   animation:brandCard .5s var(--ease) both;
   animation-delay:calc(var(--i) * .05s + .12s);
 }
 @keyframes brandCard{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
-.brand-card:hover{transform:translateY(-4px);box-shadow:0 12px 28px rgba(0,0,0,.13);border-color:transparent}
-.brand-card:active{transform:translateY(-1px) scale(.98)}
+/* Gradient Flow — ไล่ 2 สีแบรนด์เลื่อนตลอด */
 .brand-card::before{
-  content:'';position:absolute;inset:-2px;z-index:1;background:var(--bc);
-  transform:translateX(-108%) skewX(-8deg);transition:transform .4s var(--ease);
+  content:'';position:absolute;inset:0;z-index:1;
+  background:linear-gradient(125deg,
+    color-mix(in srgb,var(--c1) 20%,var(--bg2)),
+    var(--bg2) 38%,
+    color-mix(in srgb,var(--c2) 26%,var(--bg2)) 68%,
+    var(--bg2));
+  background-size:240% 240%;
+  animation:gradFlow 4.5s ease infinite;
+  animation-delay:calc(var(--i) * .3s);
 }
-.brand-card:hover::before{transform:translateX(0) skewX(-8deg)}
+@keyframes gradFlow{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+.brand-card:hover{transform:translateY(-4px);box-shadow:0 10px 26px color-mix(in srgb,var(--c1) 32%,transparent)}
+.brand-card:hover::before{animation-duration:1.6s}
+.brand-card:active{transform:translateY(-1px) scale(.96)}
+/* code chip — ไล่ 2 สีแบรนด์ */
 .brand-badge{
-  position:absolute;top:10px;right:10px;z-index:3;
-  font-size:9.5px;font-weight:600;letter-spacing:.5px;
-  padding:3px 8px;border-radius:20px;background:var(--bg3);color:var(--fg3);
-  transition:background .3s,color .3s;
+  position:relative;z-index:2;
+  font-size:11px;font-weight:700;letter-spacing:.4px;color:#fff;
+  padding:3px 10px;border-radius:20px;
+  background:linear-gradient(135deg,var(--c1),var(--c2));
+  box-shadow:0 2px 6px color-mix(in srgb,var(--c1) 40%,transparent);
 }
-.brand-card:hover .brand-badge{background:rgba(255,255,255,.25);color:#fff}
 .brand-initial{
-  position:relative;z-index:2;font-size:26px;font-weight:700;color:var(--fg3);
-  letter-spacing:.5px;transition:opacity .3s;
+  position:relative;z-index:2;font-size:15px;font-weight:600;color:var(--fg2);
+  line-height:1.2;letter-spacing:.2px;
 }
-.brand-card:hover .brand-initial{opacity:0}
-.brand-reveal{
-  position:absolute;z-index:3;inset:0;
-  display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-end;
-  padding:14px;gap:6px;opacity:0;transform:translateY(8px);
-  transition:opacity .3s .12s,transform .3s .12s;
-}
-.brand-card:hover .brand-reveal{opacity:1;transform:translateY(0)}
-.brand-reveal-name{font-size:15px;font-weight:700;color:#fff;line-height:1.2}
-.brand-reveal-go{
-  font-size:11px;font-weight:600;color:#fff;display:flex;align-items:center;gap:4px;
-  background:rgba(255,255,255,.22);padding:5px 10px;border-radius:20px;
-}
+/* selected pop */
+.brand-card.sel{transform:scale(1.07);box-shadow:0 12px 32px color-mix(in srgb,var(--c1) 45%,transparent);z-index:5}
+.brand-grid.choosing .brand-card:not(.sel){opacity:.35;transform:scale(.95);filter:saturate(.5)}
 </style>
 </head>
 <body>
@@ -914,40 +912,44 @@ const CONFIG = {
 
 /* ═══ BRANDS — แก้รายชื่อแบรนด์ตรงนี้ ═══ */
 const BRANDS = [
-  {code:'Dunkin',  name:"Dunkin'",            color:'#FF6B00'},
-  {code:'Greyhound Cafe', name:"Greyhound Cafe'",    color:'#1A1A1A'},
-  {code:'Greyhound Original',  name:'Greyhound Original', color:'#6B6B6B'},
-  {code:'Au Bon Pain', name:'Au Bon Pain',        color:'#D4A017'},
-  {code:'Funky Fries',  name:'Funky Fries',        color:'#1B3F8B'},
-  {code:'Another Hound Cafe', name:"Another Hound Cafe'",color:'#0D2B23'},
-  {code:'Bean Hound',  name:'Bean Hound',         color:'#8B7355'},
-  {code:'MUD & HOUND',  name:'MUD & HOUND',         color:'#8B7355'},
+  {code:'M&H', name:'Mud & Hound',         c1:'#0E2C62', c2:'#FFFFFF'},
+  {code:'GD',  name:"Dunkin'",             c1:'#ED7F00', c2:'#E4398A'},
+  {code:'GHC', name:"Greyhound Cafe'",     c1:'#0B0B0B', c2:'#FEFEFE'},
+  {code:'GH',  name:'Greyhound Original',  c1:'#0B0B0B', c2:'#FEFEFE'},
+  {code:'ABP', name:'Au Bon Pain',         c1:'#8B7A68', c2:'#F1B20E'},
+  {code:'FF',  name:'Funky Fries',         c1:'#FD9B19', c2:'#0D4287'},
+  {code:'AHC', name:"Another Hound Cafe'", c1:'#F2EAD7', c2:'#0C0706'},
+  {code:'BE',  name:'Bean Hound',          c1:'#D5D5D5', c2:'#020202'},
 ];
 
 function renderBrands(){
   const grid=document.getElementById('brandGrid');
   grid.innerHTML=BRANDS.map((b,i)=>`
-    <div class="brand-card" style="--bc:${b.color};--i:${i}" onclick="selectBrand('${b.code}')">
-      <span class="brand-badge">${b.code}</span>
-      <span class="brand-initial">${b.code}</span>
-      <div class="brand-reveal">
-        <div class="brand-reveal-name">${escapeHtml(b.name)}</div>
-        <div class="brand-reveal-go">แจ้งเบาะแส ›</div>
-      </div>
+    <div class="brand-card" style="--c1:${b.c1};--c2:${b.c2};--i:${i}" onclick="selectBrand('${b.code.replace(/'/g,"\\'")}',this)">
+      <span class="brand-badge">${escapeHtml(b.code)}</span>
+      <span class="brand-initial">${escapeHtml(b.name)}</span>
     </div>`).join('');
 }
 
-function selectBrand(code){
+function selectBrand(code,el){
   const b=BRANDS.find(x=>x.code===code);
   if(!b)return;
   S.brand=b;
+  // อนิเมชั่นเลือก: การ์ดที่กดเด้งขยาย + การ์ดอื่นจางลง
+  const grid=document.getElementById('brandGrid');
+  if(el && grid){
+    grid.classList.add('choosing');
+    el.classList.add('sel');
+  }
   const scr=document.getElementById('brandScreen');
-  scr.classList.add('hide');
   setTimeout(()=>{
-    scr.style.display='none';
-    document.getElementById('ibar').classList.add('hidden');
-    askStep(0);
-  },450);
+    scr.classList.add('hide');
+    setTimeout(()=>{
+      scr.style.display='none';
+      document.getElementById('ibar').classList.add('hidden');
+      askStep(0);
+    },450);
+  },420);
 }
 
 /* ═══════════════════════════════════════════
