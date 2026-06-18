@@ -1560,11 +1560,21 @@ async function submitFromModal(){
   const minWait=new Promise(r=>setTimeout(r,700));
 
   try{
-    const res=await fetch(CONFIG.apiEndpoint,{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify(payload),
-    });
+    const fd = new FormData();
+fd.append('case',     caseNo);
+fd.append('brand',    S.brand ? S.brand.code : '');
+fd.append('name',     S.name || '');
+fd.append('contact',  S.contact || '');
+fd.append('location', S.location || '');
+fd.append('gps_lat',  S.gps ? String(S.gps.lat) : '');
+fd.append('gps_lng',  S.gps ? String(S.gps.lng) : '');
+fd.append('detail',   S.detail || '');
+S.files.forEach(f => fd.append('files', f));
+
+const res = await fetch(CONFIG.apiEndpoint, {
+  method: 'POST',
+  body: fd,
+});
     if(!res.ok) throw new Error('เซิร์ฟเวอร์ตอบกลับ '+res.status);
     const data=await res.json();
     if(!data || data.success!==true) throw new Error((data&&data.message)||'บันทึกไม่สำเร็จ');
