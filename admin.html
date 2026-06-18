@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html lang="th" data-t="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>Admin · แจ้งเบาะแส</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F0F2F8;--bg2:#fff;--bg3:#f4f5f9;--bg4:#e8e9ef;
+  --fg:#111;--fg2:#333;--fg3:#666;--fg4:#999;
+  --border:#e4e4e8;--border2:#d0d0d6;
+  --primary:#1E1B4B;--primary2:#2D2869;
+  --accent:#6C63FF;--accent2:#8B85FF;
+  --accent-light:#EEEDFE;--accent-dim:rgba(108,99,255,.1);
+  --success:#10B981;--success-light:#D1FAE5;
+  --danger:#EF4444;--danger-light:#FEE2E2;--warn:#F59E0B;--warn-light:#FEF3C7;
+  --unread:#3B82F6;
+  --sans:'Prompt',sans-serif;
+  --ease:cubic-bezier(.22,.61,.36,1);
+  --sh:0 2px 12px rgba(30,27,75,.08);
+  --sh2:0 8px 30px rgba(30,27,75,.14);
+}
+[data-t="dark"]{
+  --bg:#0d0d12;--bg2:#16161c;--bg3:#1c1c24;--bg4:#22222c;
+  --fg:#eee;--fg2:#ccc;--fg3:#888;--fg4:#555;
+  --border:#22222c;--border2:#2a2a36;
+  --accent-light:rgba(108,99,255,.18);
+  --danger-light:rgba(239,68,68,.15);--warn-light:rgba(245,158,11,.15);--success-light:rgba(16,185,129,.15);
+  --sh:0 2px 12px rgba(0,0,0,.4);--sh2:0 8px 30px rgba(0,0,0,.5);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;font-family:var(--sans);background:var(--bg);color:var(--fg);-webkit-font-smoothing:antialiased}
+body{overflow-x:hidden}
+.rhi{width:1em;height:1em;fill:currentColor;display:inline-block;vertical-align:-.125em;flex-shrink:0}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input{font-family:inherit}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes pop{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:scale(1)}}
+@keyframes slideIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
+
+/* ══════════ LOGIN ══════════ */
+.login-screen{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;padding:24px;background:linear-gradient(150deg,var(--primary),var(--primary2))}
+.login-card{width:100%;max-width:380px;background:var(--bg2);border-radius:22px;padding:36px 30px 30px;box-shadow:var(--sh2);animation:pop .4s var(--ease) both}
+.login-logo{width:58px;height:58px;border-radius:16px;background:linear-gradient(135deg,var(--accent),var(--primary));display:flex;align-items:center;justify-content:center;color:#fff;margin:0 auto 18px}
+.login-logo .rhi{width:30px;height:30px}
+.login-title{font-size:21px;font-weight:700;text-align:center;margin-bottom:4px}
+.login-desc{font-size:13px;color:var(--fg3);text-align:center;margin-bottom:26px}
+.field{margin-bottom:14px}
+.field-label{font-size:12px;font-weight:500;color:var(--fg3);margin-bottom:6px;display:block}
+.field-input{display:flex;align-items:center;gap:9px;border:1.5px solid var(--border);border-radius:11px;padding:0 13px;background:var(--bg3);transition:border-color .15s}
+.field-input:focus-within{border-color:var(--accent)}
+.field-input .rhi{color:var(--fg4);width:17px;height:17px}
+.field-input input{flex:1;border:none;background:none;outline:none;color:var(--fg);font-size:14px;padding:12px 0}
+.login-btn{width:100%;margin-top:8px;padding:13px;border-radius:11px;background:linear-gradient(135deg,var(--accent),var(--primary));color:#fff;font-size:15px;font-weight:600;transition:filter .15s,transform .15s}
+.login-btn:hover{filter:brightness(1.07)}
+.login-btn:active{transform:scale(.98)}
+.login-err{font-size:12.5px;color:var(--danger);background:var(--danger-light);padding:9px 12px;border-radius:9px;margin-bottom:14px;display:none;align-items:center;gap:7px}
+.login-err.show{display:flex;animation:fadeIn .2s}
+.login-hint{font-size:11px;color:var(--fg4);text-align:center;margin-top:18px;line-height:1.6}
+
+/* ══════════ SHELL ══════════ */
+.shell{display:none;min-height:100vh}
+.shell.show{display:block}
+.topbar{position:sticky;top:0;z-index:40;display:flex;align-items:center;gap:12px;background:var(--bg2);border-bottom:1px solid var(--border);padding:0 16px;height:58px}
+.topbar-burger{display:none;width:38px;height:38px;border-radius:10px;align-items:center;justify-content:center;color:var(--fg2)}
+.topbar-burger:active{background:var(--bg3)}
+.topbar-logo{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,var(--accent),var(--primary));display:flex;align-items:center;justify-content:center;color:#fff;flex-shrink:0}
+.topbar-logo .rhi{width:19px;height:19px}
+.topbar-title{font-size:15px;font-weight:600;flex:1;line-height:1.2}
+.topbar-title small{display:block;font-size:11px;font-weight:400;color:var(--fg3)}
+.icon-btn{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;color:var(--fg2);transition:background .15s}
+.icon-btn:hover{background:var(--bg3)}
+.icon-btn .rhi{width:18px;height:18px}
+.user-chip{display:flex;align-items:center;gap:7px;padding:5px 12px 5px 7px;border-radius:30px;background:var(--bg3);font-size:12.5px;font-weight:500}
+.user-chip .av{width:26px;height:26px;border-radius:50%;flex-shrink:0;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:600}
+.role-pill{font-size:9.5px;font-weight:600;padding:2px 7px;border-radius:20px;letter-spacing:.3px;background:var(--accent-light);color:var(--accent)}
+.role-pill.general{background:var(--bg4);color:var(--fg3)}
+
+.body-wrap{display:flex;max-width:1280px;margin:0 auto}
+.sidebar{width:212px;flex-shrink:0;padding:18px 12px;border-right:1px solid var(--border);min-height:calc(100vh - 58px)}
+.nav-item{display:flex;align-items:center;gap:11px;width:100%;padding:11px 13px;border-radius:11px;margin-bottom:3px;font-size:13.5px;font-weight:500;color:var(--fg3);text-align:left;transition:background .15s,color .15s}
+.nav-item .rhi{width:18px;height:18px}
+.nav-item:hover{background:var(--bg3);color:var(--fg2)}
+.nav-item.active{background:var(--accent);color:#fff}
+.nav-item .nav-badge{margin-left:auto;font-size:10.5px;font-weight:700;background:var(--unread);color:#fff;min-width:19px;height:19px;border-radius:20px;display:flex;align-items:center;justify-content:center;padding:0 5px}
+.nav-item.active .nav-badge{background:rgba(255,255,255,.28)}
+.nav-sep{font-size:10.5px;font-weight:600;color:var(--fg4);letter-spacing:.5px;padding:14px 13px 7px;text-transform:uppercase}
+.main{flex:1;min-width:0;padding:22px 24px 60px}
+.page-head{margin-bottom:18px}
+.page-title{font-size:23px;font-weight:700;letter-spacing:-.3px}
+.page-sub{font-size:13px;color:var(--fg3);margin-top:3px}
+
+/* stats */
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px}
+.stat{background:var(--bg2);border:1px solid var(--border);border-radius:15px;padding:16px;animation:fadeUp .4s var(--ease) both}
+.stat-ico{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;margin-bottom:9px}
+.stat-ico .rhi{width:18px;height:18px}
+.stat-num{font-size:25px;font-weight:700;line-height:1}
+.stat-label{font-size:11.5px;color:var(--fg3);margin-top:4px}
+
+/* toolbar */
+.toolbar{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;align-items:center}
+.search-box{flex:1;min-width:200px;display:flex;align-items:center;gap:9px;background:var(--bg2);border:1px solid var(--border);border-radius:11px;padding:0 13px}
+.search-box .rhi{color:var(--fg4);width:16px;height:16px}
+.search-box input{flex:1;border:none;background:none;outline:none;color:var(--fg);font-size:13.5px;padding:11px 0}
+.seg{display:flex;background:var(--bg3);border:1px solid var(--border);border-radius:11px;padding:3px;gap:2px}
+.seg button{padding:8px 14px;border-radius:8px;font-size:12.5px;font-weight:500;color:var(--fg3);transition:background .15s,color .15s}
+.seg button.on{background:var(--bg2);color:var(--accent);box-shadow:var(--sh)}
+
+/* ══════════ MAIL LIST ══════════ */
+.mail-list{background:var(--bg2);border:1px solid var(--border);border-radius:16px;overflow:hidden;animation:fadeUp .4s var(--ease) both}
+.mail-row{display:flex;align-items:flex-start;gap:13px;padding:15px 16px 15px 14px;border-bottom:1px solid var(--border);cursor:pointer;position:relative;transition:background .12s}
+.mail-row:last-child{border-bottom:none}
+.mail-row:hover{background:var(--bg3)}
+.mail-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;margin-top:18px;background:var(--unread)}
+.mail-row.read .mail-dot{background:transparent}
+.mail-brand{width:42px;height:42px;border-radius:11px;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:700;letter-spacing:.3px}
+.mail-body{flex:1;min-width:0}
+.mail-line1{display:flex;align-items:baseline;gap:8px;margin-bottom:2px}
+.mail-case{font-size:14.5px;font-weight:700;color:var(--fg);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mail-row.read .mail-case{font-weight:500;color:var(--fg2)}
+.mail-time{margin-left:auto;font-size:11.5px;color:var(--fg4);white-space:nowrap;flex-shrink:0}
+.mail-brandname{font-size:12px;color:var(--fg3);margin-bottom:4px}
+.mail-preview{font-size:13px;color:var(--fg3);line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.mail-row.read .mail-preview{color:var(--fg4)}
+.mail-tags{display:flex;gap:7px;margin-top:7px;flex-wrap:wrap}
+.mail-tag{font-size:10.5px;color:var(--fg3);display:flex;align-items:center;gap:4px;background:var(--bg3);padding:3px 8px;border-radius:20px}
+.mail-row:hover .mail-tag{background:var(--bg4)}
+.mail-tag .rhi{width:11px;height:11px;color:var(--fg4)}
+.mail-clip{color:var(--fg4);font-size:11px;display:flex;align-items:center;gap:3px}
+.mail-clip .rhi{width:12px;height:12px}
+.empty{text-align:center;color:var(--fg4);padding:50px 20px;font-size:14px}
+
+/* ══════════ DETAIL VIEW ══════════ */
+.detail-back{display:inline-flex;align-items:center;gap:7px;font-size:13px;font-weight:500;color:var(--accent);margin-bottom:16px;padding:7px 12px;border-radius:9px;transition:background .15s}
+.detail-back:hover{background:var(--accent-light)}
+.detail-back .rhi{width:15px;height:15px}
+.detail-card{background:var(--bg2);border:1px solid var(--border);border-radius:16px;overflow:hidden;animation:slideIn .3s var(--ease) both}
+.detail-head{padding:20px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;gap:14px}
+.detail-brand{width:50px;height:50px;border-radius:13px;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px;font-weight:700}
+.detail-h-info{flex:1;min-width:0}
+.detail-case{font-size:19px;font-weight:700}
+.detail-brandname{font-size:13px;color:var(--fg3);margin-top:2px}
+.detail-time{font-size:12px;color:var(--fg4);margin-top:6px;display:flex;align-items:center;gap:5px}
+.detail-time .rhi{width:13px;height:13px}
+.detail-section{padding:18px 20px;border-bottom:1px solid var(--border)}
+.detail-section:last-child{border-bottom:none}
+.detail-label{font-size:11px;font-weight:600;color:var(--fg4);text-transform:uppercase;letter-spacing:.4px;margin-bottom:9px;display:flex;align-items:center;gap:6px}
+.detail-label .rhi{width:13px;height:13px}
+.detail-text{font-size:14.5px;color:var(--fg);line-height:1.7}
+.detail-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+@media(max-width:560px){.detail-grid{grid-template-columns:1fr}}
+.detail-item .di-label{font-size:11px;color:var(--fg4);margin-bottom:3px}
+.detail-item .di-val{font-size:14px;color:var(--fg2);font-weight:500}
+.detail-imgs{display:flex;gap:10px;flex-wrap:wrap}
+.detail-img{width:110px;height:110px;border-radius:12px;overflow:hidden;border:1px solid var(--border);cursor:pointer;background:var(--bg3);transition:transform .15s}
+.detail-img:hover{transform:scale(1.03)}
+.detail-img img{width:100%;height:100%;object-fit:cover;display:block}
+.detail-noimg{font-size:13px;color:var(--fg4);display:flex;align-items:center;gap:7px}
+.detail-noimg .rhi{width:15px;height:15px}
+
+/* ══════════ TABLES (users/log) ══════════ */
+.panel{background:var(--bg2);border:1px solid var(--border);border-radius:15px;overflow:hidden;animation:fadeUp .4s var(--ease) both}
+.panel-head{display:flex;align-items:center;justify-content:space-between;padding:15px 18px;border-bottom:1px solid var(--border)}
+.panel-title{font-size:15px;font-weight:600}
+.tbl{width:100%;border-collapse:collapse;font-size:13px}
+.tbl th{text-align:left;font-weight:600;color:var(--fg3);font-size:11.5px;padding:11px 18px;background:var(--bg3);border-bottom:1px solid var(--border);text-transform:uppercase;letter-spacing:.3px;white-space:nowrap}
+.tbl td{padding:12px 18px;border-bottom:1px solid var(--border);color:var(--fg2);vertical-align:middle}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tr:hover td{background:var(--bg3)}
+.u-name{display:flex;align-items:center;gap:9px;font-weight:500;color:var(--fg)}
+.u-av{width:30px;height:30px;border-radius:50%;flex-shrink:0;font-size:12px;font-weight:600;color:#fff;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--accent),var(--accent2))}
+.online-dot{width:7px;height:7px;border-radius:50%;background:var(--success);display:inline-block}
+.off-dot{width:7px;height:7px;border-radius:50%;background:var(--fg4);display:inline-block}
+.act-pill{font-size:10.5px;font-weight:600;padding:3px 9px;border-radius:20px;display:inline-flex;align-items:center;gap:4px;white-space:nowrap}
+.act-pill .rhi{width:11px;height:11px}
+.act-view{background:var(--accent-light);color:var(--accent)}
+.act-login{background:var(--success-light);color:var(--success)}
+.act-logout{background:var(--bg4);color:var(--fg3)}
+.act-fail{background:var(--danger-light);color:var(--danger)}
+.dup-badge{font-size:10px;font-weight:700;background:var(--warn-light);color:var(--warn);padding:2px 7px;border-radius:20px;margin-left:6px;white-space:nowrap}
+
+/* lightbox */
+.lightbox{position:fixed;inset:0;z-index:120;background:rgba(0,0,0,.85);display:none;align-items:center;justify-content:center;padding:30px;animation:fadeIn .2s}
+.lightbox.show{display:flex}
+.lightbox img{max-width:100%;max-height:100%;border-radius:12px}
+.lightbox-close{position:absolute;top:20px;right:20px;width:42px;height:42px;border-radius:50%;background:rgba(255,255,255,.15);color:#fff;font-size:22px;display:flex;align-items:center;justify-content:center}
+
+.page{display:none}
+.page.show{display:block;animation:fadeIn .25s}
+
+.backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:35}
+@media(max-width:760px){
+  .topbar-burger{display:flex}
+  .topbar-title small{display:none}
+  .sidebar{position:fixed;top:58px;left:0;bottom:0;z-index:38;background:var(--bg2);transform:translateX(-100%);transition:transform .25s var(--ease)}
+  .sidebar.open{transform:translateX(0);box-shadow:var(--sh2)}
+  .backdrop.show{display:block}
+  .stats{grid-template-columns:repeat(3,1fr);gap:8px}
+  .stat{padding:12px}
+  .stat-num{font-size:20px}
+  .stat-ico{width:28px;height:28px;margin-bottom:6px}
+  .user-chip span.uname{display:none}
+  .main{padding:18px 14px 50px}
+  .tbl-wrap{overflow-x:auto}
+  .tbl{min-width:560px}
+}
+/* ══════════ USER MANAGEMENT ══════════ */
+.btn-add{
+  display:inline-flex;align-items:center;gap:6px;
+  background:var(--accent);color:#fff;border-radius:10px;
+  padding:8px 14px;font-size:13px;font-weight:600;font-family:inherit;
+  transition:filter .15s,transform .15s;
+}
+.btn-add:hover{filter:brightness(1.08)}
+.btn-add:active{transform:scale(.97)}
+.btn-add .rhi{width:15px;height:15px}
+.row-acts{display:flex;gap:6px;justify-content:flex-end}
+.act-btn{
+  width:32px;height:32px;border-radius:8px;border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;color:var(--fg3);
+  background:var(--bg2);transition:all .15s;
+}
+.act-btn:hover{background:var(--bg3);color:var(--fg)}
+.act-btn.edit:hover{color:var(--accent);border-color:var(--accent)}
+.act-btn.del:hover{color:var(--danger);border-color:var(--danger);background:var(--danger-light)}
+.act-btn .rhi{width:14px;height:14px}
+.act-btn:disabled{opacity:.3;cursor:not-allowed}
+
+/* modal */
+.umodal{position:fixed;inset:0;z-index:130;background:rgba(17,17,27,.5);display:none;align-items:center;justify-content:center;padding:20px;animation:fadeIn .2s}
+.umodal.show{display:flex}
+.umodal-card{width:100%;max-width:400px;background:var(--bg2);border-radius:18px;padding:24px;box-shadow:var(--sh2);animation:pop .3s var(--ease) both}
+.umodal-title{font-size:18px;font-weight:700;margin-bottom:4px}
+.umodal-sub{font-size:12.5px;color:var(--fg3);margin-bottom:20px}
+.ufield{margin-bottom:14px}
+.ufield label{font-size:12px;font-weight:500;color:var(--fg3);margin-bottom:6px;display:block}
+.ufield input{width:100%;border:1.5px solid var(--border);border-radius:10px;padding:11px 13px;font-size:14px;font-family:inherit;background:var(--bg3);color:var(--fg);outline:none;transition:border-color .15s}
+.ufield input:focus{border-color:var(--accent)}
+.ufield input:disabled{opacity:.55;cursor:not-allowed}
+.role-toggle{display:flex;gap:8px}
+.role-opt{flex:1;border:1.5px solid var(--border);border-radius:10px;padding:11px;text-align:center;font-size:13px;font-weight:500;color:var(--fg3);cursor:pointer;transition:all .15s}
+.role-opt.on{border-color:var(--accent);background:var(--accent-light);color:var(--accent);font-weight:600}
+.umodal-err{font-size:12.5px;color:var(--danger);background:var(--danger-light);padding:9px 12px;border-radius:9px;margin-bottom:14px;display:none;align-items:center;gap:7px}
+.umodal-err.show{display:flex}
+.umodal-btns{display:flex;gap:9px;margin-top:22px}
+.umodal-btns button{flex:1;padding:12px;border-radius:10px;font-size:14px;font-weight:600;font-family:inherit;transition:all .15s}
+.ubtn-cancel{background:var(--bg3);color:var(--fg2)}
+.ubtn-cancel:hover{background:var(--bg4)}
+.ubtn-save{background:var(--accent);color:#fff}
+.ubtn-save:hover{filter:brightness(1.08)}
+.ubtn-save:active,.ubtn-cancel:active{transform:scale(.97)}
+.you-tag{font-size:10px;font-weight:600;color:var(--accent);background:var(--accent-light);padding:2px 7px;border-radius:20px;margin-left:6px}
+
+/* ── status pill + ปุ่มโหลดใหม่ ── */
+.st-pill{font-size:10.5px;font-weight:600;padding:3px 9px;border-radius:20px;display:inline-flex;align-items:center;gap:4px;white-space:nowrap}
+.st-new{background:rgba(59,130,246,.12);color:var(--unread)}
+.st-prog{background:var(--warn-light);color:var(--warn)}
+.st-done{background:var(--success-light);color:var(--success)}
+.st-closed{background:var(--bg4);color:var(--fg3)}
+.btn-refresh{display:flex;align-items:center;gap:6px;background:var(--bg2);border:1px solid var(--border);border-radius:11px;padding:0 16px;font-size:12.5px;font-weight:500;color:var(--fg3);transition:background .15s,color .15s}
+.btn-refresh:hover{background:var(--bg3);color:var(--accent)}
+</style>
+</head>
+<body>
+
+<!-- ══════════ LOGIN ══════════ -->
+<div class="login-screen" id="loginScreen">
+  <div class="login-card">
+    <div class="login-logo" id="loginLogo"></div>
+    <div class="login-title">ระบบจัดการแจ้งเบาะแส</div>
+    <div class="login-desc">เข้าสู่ระบบสำหรับเจ้าหน้าที่</div>
+    <div class="login-err" id="loginErr"><span id="loginErrIco"></span><span id="loginErrTxt"></span></div>
+    <div class="field">
+      <label class="field-label">ชื่อผู้ใช้</label>
+      <div class="field-input"><span id="icoUser"></span>
+        <input type="text" id="inUser" placeholder="username" autocomplete="username" onkeydown="if(event.key==='Enter')doLogin()">
+      </div>
+    </div>
+    <div class="field">
+      <label class="field-label">รหัสผ่าน</label>
+      <div class="field-input"><span id="icoKey"></span>
+        <input type="password" id="inPass" placeholder="password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+      </div>
+    </div>
+    <button class="login-btn" onclick="doLogin()">เข้าสู่ระบบ</button>
+    <div class="login-hint">ทดสอบ (mockup):<br><b>dev</b> / <b>dev1234</b> &nbsp;·&nbsp; <b>admin01</b> / <b>admin1234</b></div>
+  </div>
+</div>
+
+<!-- ══════════ APP ══════════ -->
+<div class="shell" id="shell">
+  <div class="topbar">
+    <button class="topbar-burger" onclick="toggleSidebar()" id="burger"></button>
+    <div class="topbar-logo" id="topLogo"></div>
+    <div class="topbar-title">ระบบจัดการแจ้งเบาะแส<small>ฝ่ายตรวจสอบและกำกับดูแล</small></div>
+    <button class="icon-btn" onclick="toggleTheme()" title="สลับธีม" id="themeBtn"></button>
+    <div class="user-chip">
+      <span class="av" id="userAv">D</span>
+      <span class="uname" id="userName">dev</span>
+      <span class="role-pill" id="userRole">DEV</span>
+    </div>
+    <button class="icon-btn" onclick="doLogout()" title="ออกจากระบบ" id="logoutBtn"></button>
+  </div>
+
+  <div class="backdrop" id="backdrop" onclick="toggleSidebar()"></div>
+
+  <div class="body-wrap">
+    <aside class="sidebar" id="sidebar">
+      <div class="nav-sep">เมนูหลัก</div>
+      <button class="nav-item active" id="navReports" onclick="switchPage('reports')">
+        <span id="naIcoReports"></span> กล่องเบาะแส
+        <span class="nav-badge" id="unreadBadge" style="display:none">0</span>
+      </button>
+      <button class="nav-item" id="navUsers" onclick="switchPage('users')">
+        <span id="naIcoUsers"></span> ผู้ใช้ระบบ
+      </button>
+      <div id="devOnly" style="display:none">
+        <div class="nav-sep">เฉพาะ Dev</div>
+        <button class="nav-item" id="navLogs" onclick="switchPage('logs')">
+          <span id="naIcoLogs"></span> Activity Log
+        </button>
+      </div>
+    </aside>
+
+    <main class="main">
+      <!-- ===== INBOX ===== -->
+      <section class="page show" id="pageReports">
+        <div class="page-head">
+          <div class="page-title">กล่องเบาะแส</div>
+          <div class="page-sub">รายการเบาะแสที่ได้รับ — เปิดอ่านเพื่อดูรายละเอียดและรูปภาพ</div>
+        </div>
+        <div class="stats" id="statRow"></div>
+        <div class="toolbar">
+          <div class="search-box"><span id="icoSearch"></span>
+            <input type="text" id="searchReports" placeholder="ค้นหาเลขเคส / รายละเอียด / สาขา..." oninput="renderInbox()">
+          </div>
+          <div class="seg">
+            <button class="on" id="segAll" onclick="setFilter('all')">ทั้งหมด</button>
+            <button id="segUnread" onclick="setFilter('unread')">ยังไม่อ่าน</button>
+          </div>
+          <button class="btn-refresh" onclick="loadReports()">โหลดใหม่</button>
+        </div>
+        <div class="mail-list" id="mailList"></div>
+      </section>
+
+      <!-- ===== DETAIL ===== -->
+      <section class="page" id="pageDetail"></section>
+
+      <!-- ===== USERS ===== -->
+      <section class="page" id="pageUsers">
+        <div class="page-head">
+          <div class="page-title">ผู้ใช้ระบบ</div>
+          <div class="page-sub">รายชื่อผู้ใช้และสิทธิ์การเข้าถึง (2 สิทธิ์: ทั่วไป / Dev)</div>
+        </div>
+        <div class="panel">
+          <div class="panel-head">
+            <div class="panel-title">ผู้ใช้ทั้งหมด</div>
+            <div style="display:flex;align-items:center;gap:10px">
+              <span class="role-pill general" id="userCount"></span>
+              <button class="btn-add" id="btnAddUser" onclick="openUserModal()" style="display:none">
+                <span id="icoAddUser"></span> เพิ่มผู้ใช้
+              </button>
+            </div>
+          </div>
+          <div class="tbl-wrap">
+            <table class="tbl">
+              <thead><tr><th>ผู้ใช้</th><th>สิทธิ์</th><th>สถานะ</th><th>เข้าใช้ล่าสุด</th><th id="thActions" style="display:none;text-align:right">จัดการ</th></tr></thead>
+              <tbody id="userTbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== LOGS (Dev only) ===== -->
+      <section class="page" id="pageLogs">
+        <div class="page-head">
+          <div class="page-title">Activity Log</div>
+          <div class="page-sub">บันทึกทุกการกระทำในระบบ — เข้า/ออก, เปิดดูเคส (พร้อมจำนวนครั้งที่เปิดซ้ำ)</div>
+        </div>
+        <div class="toolbar">
+          <div class="search-box"><span id="icoSearchLog"></span>
+            <input type="text" id="searchLogs" placeholder="ค้นหา user / action / เคส..." oninput="renderLogs()">
+          </div>
+          <div class="seg">
+            <button class="on" id="lsegAll" onclick="setLogFilter('all')">ทั้งหมด</button>
+            <button id="lsegView" onclick="setLogFilter('view')">เปิดเคส</button>
+            <button id="lsegAuth" onclick="setLogFilter('auth')">เข้า/ออก</button>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><div class="panel-title">ประวัติการกระทำ</div><span class="role-pill general" id="logCount"></span></div>
+          <div class="tbl-wrap">
+            <table class="tbl">
+              <thead><tr><th>ผู้ใช้</th><th>การกระทำ</th><th>รายละเอียด</th><th>วันที่ / เวลา</th><th>IP</th></tr></thead>
+              <tbody id="logTbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+</div>
+
+<!-- ══ USER ADD/EDIT MODAL ══ -->
+<div class="umodal" id="userModal">
+  <div class="umodal-card">
+    <div class="umodal-title" id="umodalTitle">เพิ่มผู้ใช้</div>
+    <div class="umodal-sub" id="umodalSub">สร้างบัญชีผู้ใช้ใหม่สำหรับเข้าระบบ</div>
+    <div class="umodal-err" id="umodalErr"><span id="umodalErrIco"></span><span id="umodalErrTxt"></span></div>
+    <div class="ufield">
+      <label>ชื่อผู้ใช้</label>
+      <input type="text" id="uUser" placeholder="เช่น admin02" autocomplete="off">
+    </div>
+    <div class="ufield">
+      <label id="uPassLabel">รหัสผ่าน</label>
+      <input type="text" id="uPass" placeholder="ตั้งรหัสผ่าน" autocomplete="off">
+    </div>
+    <div class="ufield">
+      <label>สิทธิ์การเข้าถึง</label>
+      <div class="role-toggle">
+        <div class="role-opt on" id="roleGeneral" onclick="pickRole('general')">ทั่วไป</div>
+        <div class="role-opt" id="roleDev" onclick="pickRole('dev')">Dev</div>
+      </div>
+    </div>
+    <div class="umodal-btns">
+      <button class="ubtn-cancel" onclick="closeUserModal()">ยกเลิก</button>
+      <button class="ubtn-save" id="uSaveBtn" onclick="saveUser()">บันทึก</button>
+    </div>
+  </div>
+</div>
+
+<div class="lightbox" id="lightbox" onclick="closeLightbox()">
+  <button class="lightbox-close" onclick="closeLightbox()">×</button>
+  <img id="lightboxImg" src="" alt="">
+</div>
+
+<script>
+/* ═══════════ ICONS ═══════════ */
+const RHI = {
+  "circle-user": `<path d="m12,0C5.383,0,0,5.383,0,12s5.383,12,12,12,12-5.383,12-12S18.617,0,12,0Zm-5,21.797v-3.297c0-.827.673-1.5,1.5-1.5h7c.827,0,1.5.673,1.5,1.5v3.297c-1.501.769-3.201,1.203-5,1.203s-3.499-.434-5-1.203Zm11-.582v-2.715c0-1.379-1.122-2.5-2.5-2.5h-7c-1.378,0-2.5,1.121-2.5,2.5v2.715c-3.008-1.965-5-5.362-5-9.215C1,5.935,5.935,1,12,1s11,4.935,11,11c0,3.853-1.992,7.25-5,9.215Zm-6-15.215c-2.206,0-4,1.794-4,4s1.794,4,4,4,4-1.794,4-4-1.794-4-4-4Zm0,7c-1.654,0-3-1.346-3-3s1.346-3,3-3,3,1.346,3,3-1.346,3-3,3Z"/>`,
+  "key": `<path d="m7.006,24c-1.858,0-3.633-.727-4.956-2.05C.554,20.454-.18,18.38.038,16.261c.289-2.817,2.325-5.228,5.066-5.997,1.302-.365,2.61-.354,3.893.032L18.561.732c.473-.472,1.1-.732,1.768-.732h2.172c.827,0,1.5.673,1.5,1.5v2.171c0,.668-.26,1.296-.732,1.768l-1.561,1.561h-2.707v3h-3v2.707l-2.296,2.296c.386,1.283.396,2.591.031,3.893-.769,2.741-3.178,4.777-5.997,5.067-.244.025-.489.038-.732.038Zm-.004-13.001c-.542,0-1.085.076-1.628.228-2.349.659-4.094,2.724-4.342,5.137-.187,1.818.442,3.596,1.725,4.879,1.283,1.283,3.06,1.912,4.88,1.725,2.413-.248,4.478-1.993,5.136-4.342.338-1.204.301-2.413-.111-3.596l-.103-.296,2.441-2.441v-3.293h3v-3h3.293l1.268-1.268c.283-.283.439-.66.439-1.061V1.5c0-.276-.225-.5-.5-.5h-2.172c-.395,0-.781.16-1.061.439l-10.002,10.001-.296-.103c-.649-.226-1.307-.339-1.968-.339Zm-2.002,7.001c0,.552.448,1,1,1s1-.448,1-1-.448-1-1-1-1,.448-1,1Z"/>`,
+  "terms-info": `<path d="M17.5,11c-3.584,0-6.5,2.916-6.5,6.5s2.916,6.5,6.5,6.5,6.5-2.916,6.5-6.5-2.916-6.5-6.5-6.5Zm0,12c-3.033,0-5.5-2.467-5.5-5.5s2.467-5.5,5.5-5.5,5.5,2.467,5.5,5.5-2.467,5.5-5.5,5.5Zm1-8c0,.552-.448,1-1,1s-1-.448-1-1,.448-1,1-1,1,.448,1,1Zm-.5,2.5v3c0,.276-.224,.5-.5,.5s-.5-.224-.5-.5v-3c0-.276,.224-.5,.5-.5s.5,.224,.5,.5Zm-7,6c0,.276-.224,.5-.5,.5H4.5c-2.481,0-4.5-2.019-4.5-4.5V4.5C0,2.019,2.019,0,4.5,0H13.5c2.481,0,4.5,2.019,4.5,4.5v4c0,.276-.224,.5-.5,.5s-.5-.224-.5-.5V4.5c0-1.93-1.57-3.5-3.5-3.5H4.5c-1.93,0-3.5,1.57-3.5,3.5v15c0,1.93,1.57,3.5,3.5,3.5h6c.276,0,.5,.224,.5,.5ZM13.5,6H4.5c-.276,0-.5-.224-.5-.5s.224-.5,.5-.5H13.5c.276,0,.5,.224,.5,.5s-.224,.5-.5,.5Zm-2,5H4.5c-.276,0-.5-.224-.5-.5s.224-.5,.5-.5h7c.276,0,.5,.224,.5,.5s-.224,.5-.5,.5Zm-4,4c.276,0,.5,.224,.5,.5s-.224,.5-.5,.5h-3c-.276,0-.5-.224-.5-.5s.224-.5,.5-.5h3Z"/>`,
+  "calendar-day": `<path d="m21.925 4.418c-.047-.166-.176-.295-.341-.343-.074-.022-.989-.281-2.584-.54v-2.035c0-.276-.224-.5-.5-.5s-.5.224-.5.5v1.889c-1.565-.211-3.591-.389-6-.389s-4.435.178-6 .389v-1.889c0-.276-.224-.5-.5-.5s-.5.224-.5.5v2.036c-1.595.259-2.51.518-2.584.54-.165.048-.294.177-.341.343-.044.153-1.075 3.816-1.075 8.582s1.031 8.428 1.075 8.582c.047.166.176.295.341.343.151.044 3.774 1.076 9.584 1.076s9.433-1.032 9.584-1.076c.165-.048.294-.177.341-.343.044-.153 1.075-3.816 1.075-8.582s-1.031-8.428-1.075-8.582zm-18.96.547c.938-.234 4.259-.965 9.035-.965s8.097.731 9.035.965c.121.479.372 1.569.588 3.039-1.247-.301-4.686-1.004-9.623-1.004s-8.376.703-9.623 1.004c.216-1.47.468-2.56.588-3.039zm18.07 16.07c-.938.234-4.259.965-9.035.965s-8.097-.731-9.035-.965c-.234-.93-.965-4.139-.965-8.035 0-1.429.099-2.762.235-3.928.603-.161 4.27-1.072 9.765-1.072s9.162.911 9.765 1.072c.136 1.166.235 2.499.235 3.928 0 3.896-.73 7.104-.965 8.035z"/>`,
+  "file-export": `<path d="M18.83,21.77c-.21-.18-.52-.16-.71,.04-.66,.75-1.62,1.19-2.62,1.19H4.5c-1.93,0-3.5-1.57-3.5-3.5V4.5c0-1.93,1.57-3.5,3.5-3.5h5.51c.33,0,.66,.03,.99,.09V6.5c0,1.38,1.12,2.5,2.5,2.5h5.41c.06,.32,.09,.65,.09,.99v.51c0,.28,.22,.5,.5,.5s.5-.22,.5-.5v-.51c0-1.74-.68-3.37-1.9-4.6l-3.48-3.48c-1.23-1.23-2.86-1.9-4.6-1.9H4.5C2.02,0,0,2.02,0,4.5v15c0,2.48,2.02,4.5,4.5,4.5H15.5c1.29,0,2.52-.56,3.38-1.52,.18-.21,.16-.52-.04-.71Zm-1.44-15.67c.55,.55,.97,1.2,1.24,1.9h-5.13c-.83,0-1.5-.67-1.5-1.5V1.37c.71,.27,1.35,.69,1.9,1.24l3.48,3.48Z"/>`,
+  "square-exclamation": `<path d="m11.5 13.5v-7c0-.276.224-.5.5-.5s.5.224.5.5v7c0 .276-.224.5-.5.5s-.5-.224-.5-.5zm.5 2.5c-.552 0-1 .448-1 1s.448 1 1 1 1-.448 1-1-.448-1-1-1zm11-4c0 4.667-1.051 9.509-1.062 9.558-.042.19-.19.339-.381.381-.048.011-4.891 1.062-9.557 1.062s-9.509-1.051-9.557-1.062c-.191-.042-.34-.19-.381-.381-.011-.049-1.062-4.891-1.062-9.558s1.051-9.509 1.062-9.558c.042-.19.19-.339.381-.381.048-.011 4.891-1.062 9.557-1.062s9.509 1.051 9.557 1.062c.191.042.34.19.381.381.011.049 1.062 4.891 1.062 9.558zm-1 0c0-3.879-.745-7.891-.973-9.027-1.136-.228-5.148-.973-9.027-.973s-7.891.745-9.027.973c-.228 1.137-.973 5.148-.973 9.027s.745 7.891.973 9.027c1.136.228 5.148.973 9.027.973s7.891-.745 9.027-.973c.228-1.137.973-5.148.973-9.027z"/>`,
+  "checkbox": `<path d="M19.5,0H4.5C2.019,0,0,2.019,0,4.5v15c0,2.481,2.019,4.5,4.5,4.5h15c2.481,0,4.5-2.019,4.5-4.5V4.5c0-2.481-2.019-4.5-4.5-4.5Zm3.5,19.5c0,1.93-1.57,3.5-3.5,3.5H4.5c-1.93,0-3.5-1.57-3.5-3.5V4.5c0-1.93,1.57-3.5,3.5-3.5h15c1.93,0,3.5,1.57,3.5,3.5v15Zm-2.142-12.348c.192,.197,.188,.515-.011,.706l-9.792,9.5c-.412,.412-.966,.642-1.556,.642s-1.144-.229-1.561-.646L3.158,12.864c-.202-.188-.212-.505-.022-.706,.188-.203,.507-.212,.706-.022l4.793,4.5c.479,.477,1.264,.466,1.719,.011L20.152,7.142c.199-.193,.517-.188,.706,.011Z"/>`,
+  "menu-burger": `<path d="M0,11.5H24v1H0v-1ZM0,4v1H24v-1H0ZM0,20H24v-1H0v1Z"/>`,
+  "moon": `<path d="M22.692,12.514c-.203-.086-.436-.027-.576,.14-1.086,1.298-2.877,1.902-5.637,1.902-4.998,0-7.037-2.038-7.037-7.033,0-2.694,.621-4.538,1.899-5.638,.165-.142,.219-.374,.134-.575-.086-.2-.293-.313-.507-.302C5.285,1.548,1,6.263,1,11.976c0,6.075,4.945,11.019,11.023,11.019,5.721,0,10.439-4.287,10.975-9.973,.021-.218-.104-.424-.306-.508Zm-10.669,9.48c-5.527,0-10.023-4.494-10.023-10.019C2,7.241,5.236,3.261,9.721,2.222c-.858,1.28-1.278,3.03-1.278,5.301,0,7.12,4.295,8.033,8.037,8.033,2.314,0,4.038-.406,5.301-1.263-1.046,4.475-5.024,7.701-9.757,7.701Z"/>`,
+  "brightness": `<path d="M12,17c-2.76,0-5-2.24-5-5s2.24-5,5-5,5,2.24,5,5-2.24,5-5,5Zm0-9c-2.21,0-4,1.79-4,4s1.79,4,4,4,4-1.79,4-4-1.79-4-4-4Zm.5-3.5V.5c0-.28-.22-.5-.5-.5s-.5,.22-.5,.5V4.5c0,.28,.22,.5,.5,.5s.5-.22,.5-.5Zm0,19v-4c0-.28-.22-.5-.5-.5s-.5,.22-.5,.5v4c0,.28,.22,.5,.5,.5s.5-.22,.5-.5ZM5,12c0-.28-.22-.5-.5-.5H.5c-.28,0-.5,.22-.5,.5s.22,.5,.5,.5H4.5c.28,0,.5-.22,.5-.5Zm19,0c0-.28-.22-.5-.5-.5h-4c-.28,0-.5,.22-.5,.5s.22,.5,.5,.5h4c.28,0,.5-.22,.5-.5Zm-6.15-5.15l3-3c.2-.2,.2-.51,0-.71s-.51-.2-.71,0l-3,3c-.2,.2-.2,.51,0,.71,.1,.1,.23,.15,.35,.15s.26-.05,.35-.15ZM3.85,20.85l3-3c.2-.2,.2-.51,0-.71s-.51-.2-.71,0l-3,3c-.2,.2-.2,.51,0,.71,.1,.1,.23,.15,.35,.15s.26-.05,.35-.15ZM6.85,6.85c.2-.2,.2-.51,0-.71L3.85,3.15c-.2-.2-.51-.2-.71,0s-.2,.51,0,.71l3,3c.1,.1,.23,.15,.35,.15s.26-.05,.35-.15Zm14,14c.2-.2,.2-.51,0-.71l-3-3c-.2-.2-.51-.2-.71,0s-.2,.51,0,.71l3,3c.1,.1,.23,.15,.35,.15s.26-.05,.35-.15Z"/>`,
+  "logout": `<path d="M16.5,0h-6c-2.481,0-4.5,2.019-4.5,4.5v1c0,.276,.224,.5,.5,.5s.5-.224,.5-.5v-1c0-1.93,1.57-3.5,3.5-3.5h6c1.93,0,3.5,1.57,3.5,3.5v15c0,1.93-1.57,3.5-3.5,3.5h-6c-1.93,0-3.5-1.57-3.5-3.5v-1c0-.276-.224-.5-.5-.5s-.5,.224-.5,.5v1c0,2.481,2.019,4.5,4.5,4.5h6c2.481,0,4.5-2.019,4.5-4.5V4.5c0-2.481-2.019-4.5-4.5-4.5Zm-4.85,15.85c.195,.195,.512,.195,.707,0l3-3c.195-.195,.195-.512,0-.707l-3-3c-.195-.195-.512-.195-.707,0s-.195,.512,0,.707l2.146,2.146H.5c-.276,0-.5,.224-.5,.5s.224,.5,.5,.5H13.793l-2.146,2.146c-.195,.195-.195,.512,0,.707Z"/>`,
+  "eye": `<path d="M23.821,11.181c-.026-.058-.659-1.43-2.058-2.828-1.864-1.863-4.221-2.848-6.815-2.848h-1.896c-2.594,0-4.951,.985-6.815,2.848-1.399,1.398-2.032,2.77-2.058,2.828-.114,.255-.114,.585,0,.84,.026,.058,.659,1.43,2.058,2.828,1.864,1.863,4.221,2.848,6.815,2.848h1.896c2.594,0,4.951-.985,6.815-2.848,1.399-1.398,2.032-2.77,2.058-2.828,.114-.255,.114-.585,0-.84Zm-2.765,2.961c-1.673,1.673-3.781,2.557-6.108,2.557h-1.896c-2.327,0-4.436-.884-6.108-2.557-1.146-1.146-1.731-2.301-1.92-2.701,.189-.4,.774-1.556,1.92-2.701,1.673-1.673,3.781-2.557,6.108-2.557h1.896c2.327,0,4.436,.884,6.108,2.557,1.146,1.146,1.731,2.301,1.92,2.701-.189,.4-.774,1.556-1.92,2.701Zm-7.056-6.142c-2.481,0-4.5,2.019-4.5,4.5s2.019,4.5,4.5,4.5,4.5-2.019,4.5-4.5-2.019-4.5-4.5-4.5Zm0,8c-1.93,0-3.5-1.57-3.5-3.5s1.57-3.5,3.5-3.5,3.5,1.57,3.5,3.5-1.57,3.5-3.5,3.5Z"/>`,
+  "list": `<path d="M7.5,4h16c.276,0,.5-.224,.5-.5s-.224-.5-.5-.5H7.5c-.276,0-.5,.224-.5,.5s.224,.5,.5,.5Zm16,7.5H7.5c-.276,0-.5,.224-.5,.5s.224,.5,.5,.5h16c.276,0,.5-.224,.5-.5s-.224-.5-.5-.5Zm0,8.5H7.5c-.276,0-.5,.224-.5,.5s.224,.5,.5,.5h16c.276,0,.5-.224,.5-.5s-.224-.5-.5-.5ZM1.75,2c-.965,0-1.75,.785-1.75,1.75s.785,1.75,1.75,1.75,1.75-.785,1.75-1.75-.785-1.75-1.75-1.75Zm0,2.5c-.413,0-.75-.336-.75-.75s.337-.75,.75-.75,.75,.336,.75,.75-.337,.75-.75,.75Zm0,5.75c-.965,0-1.75,.785-1.75,1.75s.785,1.75,1.75,1.75,1.75-.785,1.75-1.75-.785-1.75-1.75-1.75Zm0,2.5c-.413,0-.75-.336-.75-.75s.337-.75,.75-.75,.75,.336,.75,.75-.337,.75-.75,.75Zm0,5.75c-.965,0-1.75,.785-1.75,1.75s.785,1.75,1.75,1.75,1.75-.785,1.75-1.75-.785-1.75-1.75-1.75Zm0,2.5c-.413,0-.75-.336-.75-.75s.337-.75,.75-.75,.75,.336,.75,.75-.337,.75-.75,.75Z"/>`,
+  "shield": `<path d="M21.166,4.998L13.166,.255c-.717-.34-1.615-.34-2.332,0L2.834,4.998c-.708,.421-1.166,1.198-1.166,1.974v5.027c0,6.627,8.476,11.49,9.557,12.075,.245,.133,.515,.199,.785,.199s.54-.066,.785-.199c1.081-.585,9.557-5.448,9.557-12.075V6.972c0-.776-.458-1.553-1.166-1.974Zm.166,7.002c0,5.952-7.871,10.477-8.928,11.049-.151,.082-.325,.082-.477,0-1.057-.572-8.928-5.097-8.928-11.049V6.972c0-.42,.27-.853,.677-1.094L11.677,1.135c.215-.102,.43-.102,.646,0l8,4.743c.407,.242,.677,.674,.677,1.094v5.027Z"/>`,
+  "pencil": `<path d="M22.94,1.06c-1.37-1.37-3.76-1.37-5.12,0L1.61,17.27c-1.04,1.04-1.61,2.42-1.61,3.89v2.35c0,.28,.22,.5,.5,.5H2.85c1.47,0,2.85-.57,3.89-1.61L22.94,6.18c1.41-1.41,1.41-3.71,0-5.12Zm-1.06,4.06L5.67,21.32c-.76,.76-1.76,1.18-2.82,1.18H1v-1.85c0-1.06,.42-2.06,1.18-2.82L18.39,1.62c.79-.79,2.07-.79,2.86,0s.79,2.07,0,2.86l-.37,.64Z"/>`,
+  "trash": `<path d="M21,4h-5V2.5C16,1.12,14.88,0,13.5,0h-3C9.12,0,8,1.12,8,2.5v1.5H3c-.28,0-.5,.22-.5,.5s.22,.5,.5,.5h1.04l1.2,15.06c.13,1.62,1.5,2.88,3.12,2.88h6.27c1.63,0,2.99-1.26,3.12-2.88l1.2-15.06h1.04c.28,0,.5-.22,.5-.5s-.22-.5-.5-.5ZM9,2.5c0-.83,.67-1.5,1.5-1.5h3c.83,0,1.5,.67,1.5,1.5v1.5h-6V2.5Zm7.88,17.48c-.09,1.1-1.01,1.96-2.12,1.96h-6.27c-1.11,0-2.04-.86-2.12-1.96l-1.19-14.98h12.9l-1.19,14.98ZM10,9.5v8c0,.28-.22,.5-.5,.5s-.5-.22-.5-.5v-8c0-.28,.22-.5,.5-.5s.5,.22,.5,.5Zm5,0v8c0,.28-.22,.5-.5,.5s-.5-.22-.5-.5v-8c0-.28,.22-.5,.5-.5s.5,.22,.5,.5Z"/>`,
+  "add": `<path d="m12,0C5.38,0,0,5.38,0,12s5.38,12,12,12,12-5.38,12-12S18.62,0,12,0Zm0,23c-6.07,0-11-4.93-11-11S5.93,1,12,1s11,4.93,11,11-4.93,11-11,11Zm5-11c0,.28-.22,.5-.5,.5h-4v4c0,.28-.22,.5-.5,.5s-.5-.22-.5-.5v-4h-4c-.28,0-.5-.22-.5-.5s.22-.5,.5-.5h4v-4c0-.28,.22-.5,.5-.5s.5,.22,.5,.5v4h4c.28,0,.5,.22,.5,.5Z"/>`,
+  "back": `<path d="M15.85,3.15c-.2-.2-.51-.2-.71,0L6.79,11.5c-.28,.28-.28,.72,0,1l8.35,8.35c.1,.1,.23,.15,.35,.15s.26-.05,.35-.15c.2-.2,.2-.51,0-.71l-8.29-8.29L15.85,3.85c.2-.2,.2-.51,0-.71Z"/>`,
+};
+function ic(n,w){const s=w?`width:${w}px;height:${w}px;`:'';return `<svg class="rhi" viewBox="0 0 24 24" style="${s}">${RHI[n]||''}</svg>`}
+function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+
+/* ═══════════ DATA ═══════════ */
+const BRAND_C={
+  'M&H':['#0E2C62','#FFFFFF'],GD:['#ED7F00','#E4398A'],GHC:['#0B0B0B','#FEFEFE'],
+  GH:['#0B0B0B','#FEFEFE'],ABP:['#8B7A68','#F1B20E'],FF:['#FD9B19','#0D4287'],
+  AHC:['#F2EAD7','#0C0706'],BE:['#D5D5D5','#020202']
+};
+function brandGrad(code){const c=BRAND_C[code]||['#888','#bbb'];return `linear-gradient(135deg,${c[0]},${c[1]})`}
+const BRAND_NAME={'M&H':'Mud & Hound',GD:"Dunkin'",GHC:"Greyhound Cafe'",GH:'Greyhound Original',ABP:'Au Bon Pain',FF:'Funky Fries',AHC:"Another Hound Cafe'",BE:'Bean Hound'};
+/* ── ต่อ DB จริง: ดึงเคสจาก /api/reports/list ── */
+const API='https://report.mobile1234.site/api';
+
+/* สถานะเคส (ตรงกับ enum ใน DB: new/in_progress/resolved/closed) */
+const STATUS={
+  new:{label:'ใหม่',cls:'st-new'},
+  in_progress:{label:'กำลังดำเนินการ',cls:'st-prog'},
+  resolved:{label:'แก้ไขแล้ว',cls:'st-done'},
+  closed:{label:'ปิดเคส',cls:'st-closed'},
+};
+function stPill(s){const x=STATUS[s]||STATUS.new;return `<span class="st-pill ${x.cls}">${x.label}</span>`}
+
+/* ISO datetime -> dd/mm/yyyy HH:MM (เวลาตามเครื่องผู้ใช้) */
+function fmtDate(iso){
+  if(!iso) return '—';
+  const d=new Date(iso);
+  if(isNaN(d.getTime())) return esc(iso);
+  const p=n=>String(n).padStart(2,'0');
+  return `${p(d.getDate())}/${p(d.getMonth()+1)}/${d.getFullYear()} ${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+/* รวม ชื่อ/เบอร์/อีเมล เป็นบรรทัดเดียว (สำหรับ inbox) */
+function contactStr(name,tel,email){
+  const a=[]; if(name)a.push(name); if(tel)a.push(tel); if(email)a.push(email);
+  return a.length?a.join(' · '):'ไม่ระบุ (นิรนาม)';
+}
+/* แปลง row จาก API -> รูปแบบที่หน้า admin ใช้ */
+function mapReport(row){
+  return {
+    id: row.id,
+    case: row.case_no,
+    detail: (row.detail&&String(row.detail).trim())?row.detail:'(ไม่มีรายละเอียด)',
+    name: row.name, tel: row.tel, email: row.email,
+    contact: contactStr(row.name,row.tel,row.email),
+    location: (row.location&&String(row.location).trim())?row.location:'—',
+    lat: row.gps_lat, lng: row.gps_lng,
+    files: row.files_count||0,
+    status: row.status||'new',
+    created: fmtDate(row.created_at),
+  };
+}
+
+let REPORTS=[];   // เติมจาก DB ตอน login (ดู loadReports)
+
+async function loadReports(){
+  const el=document.getElementById('mailList');
+  if(el) el.innerHTML=`<div class="empty">กำลังโหลดข้อมูล…</div>`;
+  try{
+    const res=await fetch(API+'/reports/list');
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    const data=await res.json();
+    REPORTS=(data.reports||[]).map(mapReport);
+    renderInbox();
+  }catch(e){
+    if(el) el.innerHTML=`<div class="empty">โหลดข้อมูลไม่สำเร็จ<br><span style="font-size:12px;color:var(--fg4)">${esc(e.message)}</span></div>`;
+  }
+}
+
+const USERS=[
+  {user:'dev',role:'dev',online:true,last:'วันนี้ 14:32'},
+  {user:'admin01',role:'general',online:false,last:'14/06/2026 18:05'},
+  {user:'audit_jane',role:'general',online:false,last:'13/06/2026 10:22'},
+];
+
+/* read state แยกตาม user (mockup ในหน่วยความจำ) */
+const READ_BY_USER={
+  dev:    new Set(),
+  admin01:new Set(),
+  audit_jane:new Set(),
+};
+/* activity log (mockup) */
+let LOGS=[
+  {user:'dev',action:'login',target:'',time:'15/06/2026 14:32:10',ip:'10.8.1.45'},
+  {user:'admin01',action:'login',target:'',time:'14/06/2026 18:05:33',ip:'10.8.1.88'},
+  {user:'admin01',action:'view',target:'CASE-2026-1042',dup:2,time:'14/06/2026 18:06:01',ip:'10.8.1.88'},
+  {user:'unknown',action:'fail',target:'',time:'14/06/2026 17:51:02',ip:'203.150.x.x'},
+  {user:'audit_jane',action:'view',target:'CASE-2026-1035',time:'13/06/2026 10:24:18',ip:'10.8.1.62'},
+  {user:'dev',action:'view',target:'CASE-2026-1038',time:'12/06/2026 09:15:40',ip:'10.8.1.45'},
+];
+/* นับจำนวนครั้งเปิดเคสซ้ำ ต่อ user|case */
+const VIEW_COUNT={};
+
+/* ═══════════ AUTH ═══════════ */
+const ACCOUNTS={dev:{pass:'dev1234',role:'dev'},admin01:{pass:'admin1234',role:'general'}};
+let SESSION=null;
+let FILTER='all', LOGFILTER='all';
+
+function nowStr(){
+  const d=new Date(),p=n=>String(n).padStart(2,'0');
+  return `${p(d.getDate())}/${p(d.getMonth()+1)}/${d.getFullYear()} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+}
+function pushLog(action,target,extra){
+  LOGS.unshift(Object.assign({user:SESSION.user,action,target:target||'',time:nowStr(),ip:'10.8.1.45'},extra||{}));
+}
+
+function doLogin(){
+  const u=document.getElementById('inUser').value.trim();
+  const p=document.getElementById('inPass').value;
+  const err=document.getElementById('loginErr');
+  const acc=ACCOUNTS[u];
+  if(acc && acc.pass===p){
+    SESSION={user:u,role:acc.role};
+    if(!READ_BY_USER[u]) READ_BY_USER[u]=new Set();
+    err.classList.remove('show');
+    document.getElementById('loginScreen').style.display='none';
+    document.getElementById('shell').classList.add('show');
+    pushLog('login','');
+    bootApp();
+  } else {
+    document.getElementById('loginErrTxt').textContent='ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง';
+    err.classList.add('show');
+  }
+}
+function doLogout(){
+  if(SESSION) pushLog('logout','');
+  SESSION=null;
+  document.getElementById('shell').classList.remove('show');
+  document.getElementById('loginScreen').style.display='flex';
+  document.getElementById('inPass').value='';
+}
+
+/* ═══════════ NAV ═══════════ */
+function switchPage(p){
+  document.querySelectorAll('.page').forEach(el=>el.classList.remove('show'));
+  document.querySelectorAll('.nav-item').forEach(el=>el.classList.remove('active'));
+  const cap=p.charAt(0).toUpperCase()+p.slice(1);
+  document.getElementById('page'+cap).classList.add('show');
+  const nav=document.getElementById('nav'+cap);
+  if(nav) nav.classList.add('active');
+  if(p==='reports'){renderInbox();}
+  if(p==='logs'){renderLogs();}
+  if(p==='users'){renderUsers();}
+  if(window.innerWidth<=760) closeSidebarOnly();
+}
+
+/* ═══════════ INBOX ═══════════ */
+function isRead(id){return READ_BY_USER[SESSION.user] && READ_BY_USER[SESSION.user].has(id)}
+function unreadCount(){return REPORTS.filter(r=>!isRead(r.id)).length}
+
+function setFilter(f){
+  FILTER=f;
+  document.getElementById('segAll').classList.toggle('on',f==='all');
+  document.getElementById('segUnread').classList.toggle('on',f==='unread');
+  renderInbox();
+}
+
+function renderStats(){
+  const total=REPORTS.length, unread=unreadCount(), read=total-unread;
+  const cards=[
+    {n:total,l:'ทั้งหมด',ico:'list',c:'var(--accent)',bg:'var(--accent-light)'},
+    {n:unread,l:'ยังไม่อ่าน',ico:'square-exclamation',c:'var(--unread)',bg:'rgba(59,130,246,.12)'},
+    {n:read,l:'อ่านแล้ว',ico:'checkbox',c:'var(--success)',bg:'var(--success-light)'},
+  ];
+  document.getElementById('statRow').innerHTML=cards.map((c,i)=>`
+    <div class="stat" style="animation-delay:${i*.05}s">
+      <div class="stat-ico" style="background:${c.bg};color:${c.c}">${ic(c.ico)}</div>
+      <div class="stat-num">${c.n}</div>
+      <div class="stat-label">${c.l}</div>
+    </div>`).join('');
+}
+
+function renderInbox(){
+  renderStats();
+  const uc=unreadCount();
+  const badge=document.getElementById('unreadBadge');
+  badge.textContent=uc; badge.style.display=uc?'flex':'none';
+
+  const q=(document.getElementById('searchReports').value||'').toLowerCase();
+  let list=REPORTS.filter(r=>{
+    if(FILTER==='unread' && isRead(r.id)) return false;
+    if(q){const blob=(r.case+' '+r.detail+' '+r.location+' '+(r.tel||'')+' '+(r.email||'')+' '+(r.name||'')).toLowerCase();if(!blob.includes(q))return false;}
+    return true;
+  });
+  const el=document.getElementById('mailList');
+  if(!list.length){el.innerHTML=`<div class="empty">ไม่พบรายการ</div>`;return;}
+  el.innerHTML=list.map(r=>{
+    const read=isRead(r.id);
+    return `<div class="mail-row ${read?'read':''}" onclick="openReport(${r.id})">
+      <span class="mail-dot"></span>
+      <div class="mail-brand" style="background:linear-gradient(135deg,var(--accent),var(--primary))">${ic('terms-info',20)}</div>
+      <div class="mail-body">
+        <div class="mail-line1">
+          <span class="mail-case">${esc(r.case)}</span>
+          ${r.files?`<span class="mail-clip">${ic('file-export')}${r.files}</span>`:''}
+          <span class="mail-time">${esc(r.created)}</span>
+        </div>
+        <div class="mail-preview">${esc(r.detail)}</div>
+        <div class="mail-tags">
+          ${stPill(r.status)}
+          <span class="mail-tag">${ic('terms-info')} ${esc(r.location)}</span>
+          <span class="mail-tag">${ic('circle-user')} ${esc(r.contact)}</span>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/* ═══════════ DETAIL ═══════════ */
+function openReport(id){
+  const r=REPORTS.find(x=>x.id===id);
+  if(!r)return;
+  READ_BY_USER[SESSION.user].add(id);
+  const key=SESSION.user+'|'+r.case;
+  VIEW_COUNT[key]=(VIEW_COUNT[key]||0)+1;
+  const dup=VIEW_COUNT[key];
+  pushLog('view',r.case, dup>1?{dup}:null);
+
+  const mapsLink=(r.lat!=null&&r.lng!=null)
+    ? `<a href="https://www.google.com/maps?q=${r.lat},${r.lng}" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:none">${r.lat}, ${r.lng} ↗</a>`
+    : '—';
+  const el=document.getElementById('pageDetail');
+  el.innerHTML=`
+    <button class="detail-back" onclick="switchPage('reports')">${ic('back')} กลับกล่องเบาะแส</button>
+    <div class="detail-card">
+      <div class="detail-head">
+        <div class="detail-brand" style="background:linear-gradient(135deg,var(--accent),var(--primary))">${ic('terms-info',24)}</div>
+        <div class="detail-h-info">
+          <div class="detail-case">${esc(r.case)}</div>
+          <div style="margin-top:5px">${stPill(r.status)}</div>
+          <div class="detail-time">${ic('calendar-day')} ${esc(r.created)}</div>
+        </div>
+      </div>
+      <div class="detail-section">
+        <div class="detail-label">${ic('terms-info')} รายละเอียดเบาะแส</div>
+        <div class="detail-text">${esc(r.detail)}</div>
+      </div>
+      <div class="detail-section">
+        <div class="detail-grid">
+          <div class="detail-item"><div class="di-label">ผู้แจ้ง</div><div class="di-val">${esc(r.name||'ไม่ระบุชื่อ')}</div></div>
+          <div class="detail-item"><div class="di-label">เบอร์ติดต่อ</div><div class="di-val">${esc(r.tel||'—')}</div></div>
+          <div class="detail-item"><div class="di-label">อีเมล</div><div class="di-val">${esc(r.email||'—')}</div></div>
+          <div class="detail-item"><div class="di-label">สถานที่ / สาขา</div><div class="di-val">${esc(r.location)}</div></div>
+          <div class="detail-item"><div class="di-label">พิกัด GPS</div><div class="di-val">${mapsLink}</div></div>
+          <div class="detail-item"><div class="di-label">จำนวนไฟล์แนบ</div><div class="di-val">${r.files} ไฟล์</div></div>
+        </div>
+      </div>
+      <div class="detail-section">
+        <div class="detail-label">${ic('file-export')} ไฟล์แนบ</div>
+        ${r.files>0
+          ? `<div class="detail-noimg">${ic('file-export')} มีไฟล์แนบ ${r.files} ไฟล์ — ระบบยังไม่ได้จัดเก็บไฟล์จริง (เพิ่มในเฟสถัดไป)</div>`
+          : `<div class="detail-noimg">${ic('square-exclamation')} ไม่มีไฟล์แนบ</div>`}
+      </div>
+    </div>`;
+  switchPage('detail');
+  window.scrollTo(0,0);
+}
+
+/* ═══════════ USERS ═══════════ */
+function renderUsers(){
+  document.getElementById('userCount').textContent=USERS.length+' คน';
+  const isDev=SESSION.role==='dev';
+  // ปุ่ม + คอลัมน์จัดการ เฉพาะ Dev
+  document.getElementById('btnAddUser').style.display=isDev?'inline-flex':'none';
+  document.getElementById('thActions').style.display=isDev?'table-cell':'none';
+
+  document.getElementById('userTbody').innerHTML=USERS.map((u,idx)=>{
+    const isYou=u.user===SESSION.user;
+    return `<tr>
+      <td><div class="u-name"><span class="u-av">${esc(u.user.charAt(0).toUpperCase())}</span>${esc(u.user)}${isYou?'<span class="you-tag">คุณ</span>':''}</div></td>
+      <td><span class="role-pill ${u.role==='dev'?'':'general'}">${u.role==='dev'?'DEV':'ทั่วไป'}</span></td>
+      <td>${u.online?'<span class="online-dot"></span> ออนไลน์':'<span class="off-dot"></span> ออฟไลน์'}</td>
+      <td style="color:var(--fg3)">${esc(u.last)}</td>
+      ${isDev?`<td><div class="row-acts">
+        <button class="act-btn edit" onclick="openUserModal(${idx})" title="แก้ไข">${ic('pencil')}</button>
+        <button class="act-btn del" onclick="deleteUser(${idx})" title="ลบ" ${isYou?'disabled':''}>${ic('trash')}</button>
+      </div></td>`:''}
+    </tr>`;
+  }).join('');
+}
+
+/* ── เพิ่ม/แก้ไข user ── */
+let EDIT_IDX=null;       // null = เพิ่มใหม่, ตัวเลข = แก้ไข
+let PICK_ROLE='general';
+
+function pickRole(r){
+  PICK_ROLE=r;
+  document.getElementById('roleGeneral').classList.toggle('on',r==='general');
+  document.getElementById('roleDev').classList.toggle('on',r==='dev');
+}
+function openUserModal(idx){
+  EDIT_IDX=(typeof idx==='number')?idx:null;
+  const m=document.getElementById('userModal');
+  document.getElementById('umodalErr').classList.remove('show');
+  if(EDIT_IDX!==null){
+    const u=USERS[EDIT_IDX];
+    document.getElementById('umodalTitle').textContent='แก้ไขผู้ใช้';
+    document.getElementById('umodalSub').textContent='แก้ไขข้อมูลและสิทธิ์ผู้ใช้';
+    document.getElementById('uUser').value=u.user;
+    document.getElementById('uUser').disabled=true;   // ไม่ให้แก้ username
+    document.getElementById('uPass').value='';
+    document.getElementById('uPassLabel').textContent='รหัสผ่านใหม่ (เว้นว่าง = ไม่เปลี่ยน)';
+    document.getElementById('uPass').placeholder='เว้นว่างถ้าไม่เปลี่ยน';
+    pickRole(u.role);
+  } else {
+    document.getElementById('umodalTitle').textContent='เพิ่มผู้ใช้';
+    document.getElementById('umodalSub').textContent='สร้างบัญชีผู้ใช้ใหม่สำหรับเข้าระบบ';
+    document.getElementById('uUser').value='';
+    document.getElementById('uUser').disabled=false;
+    document.getElementById('uPass').value='';
+    document.getElementById('uPassLabel').textContent='รหัสผ่าน';
+    document.getElementById('uPass').placeholder='ตั้งรหัสผ่าน';
+    pickRole('general');
+  }
+  m.classList.add('show');
+  setTimeout(()=>document.getElementById(EDIT_IDX!==null?'uPass':'uUser').focus(),100);
+}
+function closeUserModal(){document.getElementById('userModal').classList.remove('show')}
+function umErr(msg){
+  document.getElementById('umodalErrTxt').textContent=msg;
+  document.getElementById('umodalErr').classList.add('show');
+}
+function saveUser(){
+  const user=document.getElementById('uUser').value.trim();
+  const pass=document.getElementById('uPass').value;
+  if(EDIT_IDX!==null){
+    // แก้ไข
+    const u=USERS[EDIT_IDX];
+    if(pass){ ACCOUNTS[u.user].pass=pass; }
+    u.role=PICK_ROLE; ACCOUNTS[u.user].role=PICK_ROLE;
+    pushLog('edituser',u.user);
+    closeUserModal(); renderUsers();
+    return;
+  }
+  // เพิ่มใหม่
+  if(!user){umErr('กรุณากรอกชื่อผู้ใช้');return;}
+  if(ACCOUNTS[user]){umErr('ชื่อผู้ใช้นี้มีอยู่แล้ว');return;}
+  if(!pass){umErr('กรุณาตั้งรหัสผ่าน');return;}
+  USERS.push({user,role:PICK_ROLE,online:false,last:'ยังไม่เคยเข้า'});
+  ACCOUNTS[user]={pass,role:PICK_ROLE};
+  if(!READ_BY_USER[user]) READ_BY_USER[user]=new Set();
+  pushLog('adduser',user);
+  closeUserModal(); renderUsers();
+}
+function deleteUser(idx){
+  const u=USERS[idx];
+  if(u.user===SESSION.user)return;            // ห้ามลบตัวเอง
+  if(!confirm(`ต้องการลบผู้ใช้ "${u.user}" ?`))return;
+  USERS.splice(idx,1);
+  delete ACCOUNTS[u.user];
+  pushLog('deluser',u.user);
+  renderUsers();
+}
+
+/* ═══════════ LOGS (Dev only) ═══════════ */
+const ACT={
+  login:{label:'เข้าสู่ระบบ',cls:'act-login',ico:'logout'},
+  logout:{label:'ออกจากระบบ',cls:'act-logout',ico:'logout'},
+  view:{label:'เปิดดูเคส',cls:'act-view',ico:'eye'},
+  fail:{label:'เข้าระบบล้มเหลว',cls:'act-fail',ico:'square-exclamation'},
+  adduser:{label:'เพิ่มผู้ใช้',cls:'act-login',ico:'add'},
+  edituser:{label:'แก้ไขผู้ใช้',cls:'act-view',ico:'pencil'},
+  deluser:{label:'ลบผู้ใช้',cls:'act-fail',ico:'trash'},
+};
+function setLogFilter(f){
+  LOGFILTER=f;
+  ['All','View','Auth'].forEach(x=>document.getElementById('lseg'+x).classList.toggle('on',f===x.toLowerCase()));
+  renderLogs();
+}
+function renderLogs(){
+  const q=(document.getElementById('searchLogs').value||'').toLowerCase();
+  let list=LOGS.filter(l=>{
+    if(LOGFILTER==='view' && l.action!=='view') return false;
+    if(LOGFILTER==='auth' && !(l.action==='login'||l.action==='logout'||l.action==='fail')) return false;
+    if(q){const blob=(l.user+' '+(ACT[l.action]?ACT[l.action].label:'')+' '+l.target).toLowerCase();if(!blob.includes(q))return false;}
+    return true;
+  });
+  document.getElementById('logCount').textContent=list.length+' รายการ';
+  document.getElementById('logTbody').innerHTML=list.map(l=>{
+    const a=ACT[l.action]||{label:l.action,cls:'act-logout',ico:'list'};
+    const failAv=l.action==='fail';
+    return `<tr>
+      <td><div class="u-name"><span class="u-av" style="${failAv?'background:linear-gradient(135deg,var(--danger),#f87171)':''}">${esc(l.user.charAt(0).toUpperCase())}</span>${esc(l.user)}</div></td>
+      <td><span class="act-pill ${a.cls}">${ic(a.ico)} ${a.label}</span></td>
+      <td>${l.target?`<b>${esc(l.target)}</b>${l.dup&&l.dup>1?`<span class="dup-badge">เปิดซ้ำ ${l.dup} ครั้ง</span>`:''}`:'<span style="color:var(--fg4)">—</span>'}</td>
+      <td style="color:var(--fg3);white-space:nowrap">${esc(l.time)}</td>
+      <td style="color:var(--fg3);font-family:monospace;font-size:12px">${esc(l.ip)}</td>
+    </tr>`;
+  }).join('');
+}
+
+/* ═══════════ lightbox / theme / sidebar ═══════════ */
+function openLightbox(src){document.getElementById('lightboxImg').src=src;document.getElementById('lightbox').classList.add('show')}
+function closeLightbox(){document.getElementById('lightbox').classList.remove('show')}
+function toggleTheme(){const c=document.documentElement.getAttribute('data-t');document.documentElement.setAttribute('data-t',c==='dark'?'light':'dark');renderThemeIcon()}
+function renderThemeIcon(){const d=document.documentElement.getAttribute('data-t')==='dark';document.getElementById('themeBtn').innerHTML=ic(d?'brightness':'moon',18)}
+function toggleSidebar(){document.getElementById('sidebar').classList.toggle('open');document.getElementById('backdrop').classList.toggle('show')}
+function closeSidebarOnly(){document.getElementById('sidebar').classList.remove('open');document.getElementById('backdrop').classList.remove('show')}
+
+/* ═══════════ boot ═══════════ */
+function renderStaticIcons(){
+  document.getElementById('loginLogo').innerHTML=ic('shield');
+  document.getElementById('icoUser').innerHTML=ic('circle-user');
+  document.getElementById('icoKey').innerHTML=ic('key');
+  document.getElementById('loginErrIco').innerHTML=ic('square-exclamation');
+  document.getElementById('topLogo').innerHTML=ic('shield');
+  document.getElementById('burger').innerHTML=ic('menu-burger',20);
+  document.getElementById('logoutBtn').innerHTML=ic('logout',18);
+  document.getElementById('naIcoReports').innerHTML=ic('list');
+  document.getElementById('naIcoUsers').innerHTML=ic('circle-user');
+  document.getElementById('naIcoLogs').innerHTML=ic('eye');
+  document.getElementById('icoSearch').innerHTML=ic('terms-info');
+  document.getElementById('icoSearchLog').innerHTML=ic('terms-info');
+  document.getElementById('icoAddUser').innerHTML=ic('add',15);
+  document.getElementById('umodalErrIco').innerHTML=ic('square-exclamation',14);
+  renderThemeIcon();
+}
+function bootApp(){
+  document.getElementById('userName').textContent=SESSION.user;
+  document.getElementById('userAv').textContent=SESSION.user.charAt(0).toUpperCase();
+  const isDev=SESSION.role==='dev';
+  document.getElementById('userRole').textContent=isDev?'DEV':'ทั่วไป';
+  document.getElementById('userRole').classList.toggle('general',!isDev);
+  document.getElementById('devOnly').style.display=isDev?'block':'none';
+  FILTER='all'; setFilter('all');
+  switchPage('reports');
+  loadReports();
+}
+document.addEventListener('DOMContentLoaded',renderStaticIcons);
+</script>
+</body>
+</html>
