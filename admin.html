@@ -756,11 +756,14 @@ function openReport(id){
       </div>
       <div class="detail-section">
         <div class="detail-label">${ic('file-export')} ไฟล์แนบ</div>
-        ${r.files>0
-          ? `<div class="detail-noimg">${ic('file-export')} มีไฟล์แนบ ${r.files} ไฟล์ — ระบบยังไม่ได้จัดเก็บไฟล์จริง (เพิ่มในเฟสถัดไป)</div>`
-          : `<div class="detail-noimg">${ic('square-exclamation')} ไม่มีไฟล์แนบ</div>`}
+        <div id="detailImgs" class="detail-imgs">${
+          r.files>0
+            ? `<div class="detail-noimg">${ic('file-export')} กำลังโหลดรูป…</div>`
+            : `<div class="detail-noimg">${ic('square-exclamation')} ไม่มีไฟล์แนบ</div>`
+        }</div>
       </div>
     </div>`;
+  if(r.files>0) loadCaseFiles(r.id);
   switchPage('detail');
   window.scrollTo(0,0);
 }
@@ -912,6 +915,39 @@ function renderLogs(){
 /* ═══════════ lightbox / theme / sidebar ═══════════ */
 function openLightbox(src){document.getElementById('lightboxImg').src=src;document.getElementById('lightbox').classList.add('show')}
 function closeLightbox(){document.getElementById('lightbox').classList.remove('show')}
+
+/* ── โหลดรูปจริงของเคส (ผ่าน token → blob → thumbnail) ── */
+const _caseBlobUrls=[];
+async function loadCaseFiles(reportId){
+  const box=document.getElementById('detailImgs');
+  if(!box) return;
+  _caseBlobUrls.forEach(u=>URL.revokeObjectURL(u)); _caseBlobUrls.length=0;
+  try{
+    const res=await apiFetch('/reports/'+reportId+'/files');
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    const data=await res.json();
+    const files=data.files||[];
+    if(!files.length){ box.innerHTML=`<div class="detail-noimg">${ic('square-exclamation')} ไม่มีไฟล์แนบ</div>`; return; }
+    box.innerHTML='';
+    for(const f of files){
+      try{
+        const r2=await apiFetch('/reports/'+reportId+'/files/'+f.id);
+        if(!r2.ok) continue;
+        const url=URL.createObjectURL(await r2.blob());
+        _caseBlobUrls.push(url);
+        const d=document.createElement('div');
+        d.className='detail-img';
+        d.onclick=()=>openLightbox(url);
+        d.innerHTML=`<img src="${url}" alt="">`;
+        box.appendChild(d);
+      }catch(e){/* ข้ามรูปที่โหลดไม่ได้ */}
+    }
+    if(!box.children.length) box.innerHTML=`<div class="detail-noimg">${ic('square-exclamation')} โหลดรูปไม่สำเร็จ</div>`;
+  }catch(e){
+    if(e.message==='unauthorized') return;
+    box.innerHTML=`<div class="detail-noimg">${ic('square-exclamation')} โหลดรูปไม่สำเร็จ: ${esc(e.message)}</div>`;
+  }
+}
 function toggleTheme(){const c=document.documentElement.getAttribute('data-t');document.documentElement.setAttribute('data-t',c==='dark'?'light':'dark');renderThemeIcon()}
 function renderThemeIcon(){const d=document.documentElement.getAttribute('data-t')==='dark';document.getElementById('themeBtn').innerHTML=ic(d?'brightness':'moon',18)}
 function toggleSidebar(){document.getElementById('sidebar').classList.toggle('open');document.getElementById('backdrop').classList.toggle('show')}
