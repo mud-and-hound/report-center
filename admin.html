@@ -288,7 +288,7 @@ input{font-family:inherit}
       </div>
     </div>
     <button class="login-btn" onclick="doLogin()">เข้าสู่ระบบ</button>
-    <div class="login-hint">ทดสอบ (mockup):<br><b>dev</b> / <b>dev1234</b> &nbsp;·&nbsp; <b>admin01</b> / <b>admin1234</b></div>
+    <div class="login-hint">สำหรับเจ้าหน้าที่ที่ได้รับสิทธิ์เท่านั้น<br>หากเข้าครั้งแรก แนะนำให้เปลี่ยนรหัสผ่าน</div>
   </div>
 </div>
 
@@ -417,6 +417,10 @@ input{font-family:inherit}
       <input type="text" id="uUser" placeholder="เช่น admin02" autocomplete="off">
     </div>
     <div class="ufield">
+      <label>ชื่อที่แสดง</label>
+      <input type="text" id="uDisplay" placeholder="เช่น เจ้าหน้าที่ตรวจสอบ" autocomplete="off">
+    </div>
+    <div class="ufield">
       <label id="uPassLabel">รหัสผ่าน</label>
       <input type="text" id="uPass" placeholder="ตั้งรหัสผ่าน" autocomplete="off">
     </div>
@@ -475,6 +479,24 @@ const BRAND_NAME={'M&H':'Mud & Hound',GD:"Dunkin'",GHC:"Greyhound Cafe'",GH:'Gre
 /* ── ต่อ DB จริง: ดึงเคสจาก /api/reports/list ── */
 const API='https://report.mobile1234.site/api';
 
+/* ── token / auth ── */
+let TOKEN = sessionStorage.getItem('wb_token') || '';
+function setToken(t){ TOKEN=t||''; if(t) sessionStorage.setItem('wb_token',t); else sessionStorage.removeItem('wb_token'); }
+function authHeaders(){ return TOKEN ? {'Authorization':'Bearer '+TOKEN} : {}; }
+async function apiFetch(path, opts={}){
+  opts.headers = Object.assign({}, opts.headers||{}, authHeaders());
+  const res = await fetch(API+path, opts);
+  if(res.status===401){ handle401(); throw new Error('unauthorized'); }
+  return res;
+}
+function handle401(){
+  setToken(''); SESSION=null;
+  document.getElementById('shell').classList.remove('show');
+  document.getElementById('loginScreen').style.display='flex';
+  const err=document.getElementById('loginErr');
+  if(err){ document.getElementById('loginErrTxt').textContent='เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่'; err.classList.add('show'); }
+}
+
 /* สถานะเคส (ตรงกับ enum ใน DB: new/in_progress/resolved/closed) */
 const STATUS={
   new:{label:'ใหม่',cls:'st-new'},
@@ -519,21 +541,36 @@ async function loadReports(){
   const el=document.getElementById('mailList');
   if(el) el.innerHTML=`<div class="empty">กำลังโหลดข้อมูล…</div>`;
   try{
-    const res=await fetch(API+'/reports/list');
+    const res=await apiFetch('/reports/list');
     if(!res.ok) throw new Error('HTTP '+res.status);
     const data=await res.json();
     REPORTS=(data.reports||[]).map(mapReport);
     renderInbox();
   }catch(e){
+    if(e.message==='unauthorized') return;
     if(el) el.innerHTML=`<div class="empty">โหลดข้อมูลไม่สำเร็จ<br><span style="font-size:12px;color:var(--fg4)">${esc(e.message)}</span></div>`;
   }
 }
 
-const USERS=[
-  {user:'dev',role:'dev',online:true,last:'วันนี้ 14:32'},
-  {user:'admin01',role:'general',online:false,last:'14/06/2026 18:05'},
-  {user:'audit_jane',role:'general',online:false,last:'13/06/2026 10:22'},
-];
+let USERS=[];   // โหลดจาก DB (ดู loadUsers)
+async function loadUsers(){
+  const tbody=document.getElementById('userTbody');
+  if(tbody) tbody.innerHTML=`<tr><td colspan="5" style="text-align:center;color:var(--fg4);padding:30px">กำลังโหลด…</td></tr>`;
+  try{
+    const res=await apiFetch('/admin/users');
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    const data=await res.json();
+    USERS=(data.users||[]).map(u=>({
+      user:u.username, display:u.display_name, role:u.role,
+      online:!!u.online,
+      last:u.last_login_at?fmtDate(u.last_login_at):'ยังไม่เคยเข้า'
+    }));
+    renderUsers();
+  }catch(e){
+    if(e.message==='unauthorized') return;
+    if(tbody) tbody.innerHTML=`<tr><td colspan="5" style="text-align:center;color:var(--danger);padding:30px">โหลดไม่สำเร็จ: ${esc(e.message)}</td></tr>`;
+  }
+}
 
 /* read state แยกตาม user (mockup ในหน่วยความจำ) */
 const READ_BY_USER={
@@ -554,7 +591,7 @@ let LOGS=[
 const VIEW_COUNT={};
 
 /* ═══════════ AUTH ═══════════ */
-const ACCOUNTS={dev:{pass:'dev1234',role:'dev'},admin01:{pass:'admin1234',role:'general'}};
+/* auth ผ่าน API /auth/login แล้ว (ไม่เก็บรหัสผ่านในหน้าเว็บ) */
 let SESSION=null;
 let FILTER='all', LOGFILTER='all';
 
@@ -566,26 +603,36 @@ function pushLog(action,target,extra){
   LOGS.unshift(Object.assign({user:SESSION.user,action,target:target||'',time:nowStr(),ip:'10.8.1.45'},extra||{}));
 }
 
-function doLogin(){
+async function doLogin(){
   const u=document.getElementById('inUser').value.trim();
   const p=document.getElementById('inPass').value;
   const err=document.getElementById('loginErr');
-  const acc=ACCOUNTS[u];
-  if(acc && acc.pass===p){
-    SESSION={user:u,role:acc.role};
-    if(!READ_BY_USER[u]) READ_BY_USER[u]=new Set();
+  const showErr=(m)=>{document.getElementById('loginErrTxt').textContent=m; err.classList.add('show');};
+  if(!u||!p){ showErr('กรุณากรอกชื่อผู้ใช้และรหัสผ่าน'); return; }
+  try{
+    const res=await fetch(API+'/auth/login',{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({username:u,password:p})
+    });
+    if(res.status===401){ showErr('ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง'); return; }
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    const data=await res.json();
+    setToken(data.token);
+    SESSION={user:data.user.username, display:data.user.display_name, role:data.user.role};
+    if(!READ_BY_USER[SESSION.user]) READ_BY_USER[SESSION.user]=new Set();
     err.classList.remove('show');
     document.getElementById('loginScreen').style.display='none';
     document.getElementById('shell').classList.add('show');
     pushLog('login','');
     bootApp();
-  } else {
-    document.getElementById('loginErrTxt').textContent='ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง';
-    err.classList.add('show');
+  }catch(e){
+    showErr('เชื่อมต่อระบบไม่สำเร็จ: '+e.message);
   }
 }
 function doLogout(){
   if(SESSION) pushLog('logout','');
+  try{ apiFetch('/auth/logout',{method:'POST'}); }catch(e){}
+  setToken('');
   SESSION=null;
   document.getElementById('shell').classList.remove('show');
   document.getElementById('loginScreen').style.display='flex';
@@ -602,7 +649,7 @@ function switchPage(p){
   if(nav) nav.classList.add('active');
   if(p==='reports'){renderInbox();}
   if(p==='logs'){renderLogs();}
-  if(p==='users'){renderUsers();}
+  if(p==='users'){loadUsers();}
   if(window.innerWidth<=760) closeSidebarOnly();
 }
 
@@ -729,7 +776,7 @@ function renderUsers(){
   document.getElementById('userTbody').innerHTML=USERS.map((u,idx)=>{
     const isYou=u.user===SESSION.user;
     return `<tr>
-      <td><div class="u-name"><span class="u-av">${esc(u.user.charAt(0).toUpperCase())}</span>${esc(u.user)}${isYou?'<span class="you-tag">คุณ</span>':''}</div></td>
+      <td><div class="u-name"><span class="u-av">${esc((u.display||u.user).charAt(0).toUpperCase())}</span><span>${esc(u.display||u.user)} <span style="font-size:11px;color:var(--fg4);font-weight:400">@${esc(u.user)}</span></span>${isYou?'<span class="you-tag">คุณ</span>':''}</div></td>
       <td><span class="role-pill ${u.role==='dev'?'':'general'}">${u.role==='dev'?'DEV':'ทั่วไป'}</span></td>
       <td>${u.online?'<span class="online-dot"></span> ออนไลน์':'<span class="off-dot"></span> ออฟไลน์'}</td>
       <td style="color:var(--fg3)">${esc(u.last)}</td>
@@ -760,6 +807,7 @@ function openUserModal(idx){
     document.getElementById('umodalSub').textContent='แก้ไขข้อมูลและสิทธิ์ผู้ใช้';
     document.getElementById('uUser').value=u.user;
     document.getElementById('uUser').disabled=true;   // ไม่ให้แก้ username
+    document.getElementById('uDisplay').value=u.display||'';
     document.getElementById('uPass').value='';
     document.getElementById('uPassLabel').textContent='รหัสผ่านใหม่ (เว้นว่าง = ไม่เปลี่ยน)';
     document.getElementById('uPass').placeholder='เว้นว่างถ้าไม่เปลี่ยน';
@@ -769,6 +817,7 @@ function openUserModal(idx){
     document.getElementById('umodalSub').textContent='สร้างบัญชีผู้ใช้ใหม่สำหรับเข้าระบบ';
     document.getElementById('uUser').value='';
     document.getElementById('uUser').disabled=false;
+    document.getElementById('uDisplay').value='';
     document.getElementById('uPass').value='';
     document.getElementById('uPassLabel').textContent='รหัสผ่าน';
     document.getElementById('uPass').placeholder='ตั้งรหัสผ่าน';
@@ -782,36 +831,45 @@ function umErr(msg){
   document.getElementById('umodalErrTxt').textContent=msg;
   document.getElementById('umodalErr').classList.add('show');
 }
-function saveUser(){
-  const user=document.getElementById('uUser').value.trim();
+async function saveUser(){
+  const username=document.getElementById('uUser').value.trim();
+  const display=document.getElementById('uDisplay').value.trim();
   const pass=document.getElementById('uPass').value;
-  if(EDIT_IDX!==null){
-    // แก้ไข
-    const u=USERS[EDIT_IDX];
-    if(pass){ ACCOUNTS[u.user].pass=pass; }
-    u.role=PICK_ROLE; ACCOUNTS[u.user].role=PICK_ROLE;
-    pushLog('edituser',u.user);
-    closeUserModal(); renderUsers();
-    return;
+  try{
+    if(EDIT_IDX!==null){
+      // แก้ไข -> PUT
+      const u=USERS[EDIT_IDX];
+      const body={role:PICK_ROLE};
+      if(display) body.display_name=display;
+      if(pass) body.password=pass;
+      const res=await apiFetch('/admin/users/'+encodeURIComponent(u.user),{
+        method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)});
+      if(!res.ok){ const d=await res.json().catch(()=>({})); umErr(d.detail||'บันทึกไม่สำเร็จ'); return; }
+    } else {
+      // เพิ่มใหม่ -> POST
+      if(!username){umErr('กรุณากรอกชื่อผู้ใช้');return;}
+      if(!display){umErr('กรุณากรอกชื่อที่แสดง');return;}
+      if(!pass){umErr('กรุณาตั้งรหัสผ่าน');return;}
+      const res=await apiFetch('/admin/users',{
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({username, display_name:display, password:pass, role:PICK_ROLE})});
+      if(!res.ok){ const d=await res.json().catch(()=>({})); umErr(d.detail||'เพิ่มผู้ใช้ไม่สำเร็จ'); return; }
+    }
+    closeUserModal(); loadUsers();
+  }catch(e){
+    if(e.message==='unauthorized') return;
+    umErr('เชื่อมต่อไม่สำเร็จ: '+e.message);
   }
-  // เพิ่มใหม่
-  if(!user){umErr('กรุณากรอกชื่อผู้ใช้');return;}
-  if(ACCOUNTS[user]){umErr('ชื่อผู้ใช้นี้มีอยู่แล้ว');return;}
-  if(!pass){umErr('กรุณาตั้งรหัสผ่าน');return;}
-  USERS.push({user,role:PICK_ROLE,online:false,last:'ยังไม่เคยเข้า'});
-  ACCOUNTS[user]={pass,role:PICK_ROLE};
-  if(!READ_BY_USER[user]) READ_BY_USER[user]=new Set();
-  pushLog('adduser',user);
-  closeUserModal(); renderUsers();
 }
-function deleteUser(idx){
+async function deleteUser(idx){
   const u=USERS[idx];
   if(u.user===SESSION.user)return;            // ห้ามลบตัวเอง
-  if(!confirm(`ต้องการลบผู้ใช้ "${u.user}" ?`))return;
-  USERS.splice(idx,1);
-  delete ACCOUNTS[u.user];
-  pushLog('deluser',u.user);
-  renderUsers();
+  if(!confirm(`ต้องการลบผู้ใช้ "${u.display||u.user}" ?`))return;
+  try{
+    const res=await apiFetch('/admin/users/'+encodeURIComponent(u.user),{method:'DELETE'});
+    if(!res.ok){ const d=await res.json().catch(()=>({})); alert(d.detail||'ลบไม่สำเร็จ'); return; }
+    loadUsers();
+  }catch(e){ if(e.message!=='unauthorized') alert('เชื่อมต่อไม่สำเร็จ: '+e.message); }
 }
 
 /* ═══════════ LOGS (Dev only) ═══════════ */
@@ -878,8 +936,8 @@ function renderStaticIcons(){
   renderThemeIcon();
 }
 function bootApp(){
-  document.getElementById('userName').textContent=SESSION.user;
-  document.getElementById('userAv').textContent=SESSION.user.charAt(0).toUpperCase();
+  document.getElementById('userName').textContent=SESSION.display||SESSION.user;
+  document.getElementById('userAv').textContent=(SESSION.display||SESSION.user).charAt(0).toUpperCase();
   const isDev=SESSION.role==='dev';
   document.getElementById('userRole').textContent=isDev?'DEV':'ทั่วไป';
   document.getElementById('userRole').classList.toggle('general',!isDev);
@@ -888,7 +946,20 @@ function bootApp(){
   switchPage('reports');
   loadReports();
 }
-document.addEventListener('DOMContentLoaded',renderStaticIcons);
+async function tryRestore(){
+  if(!TOKEN) return;
+  try{
+    const res=await fetch(API+'/auth/me',{headers:authHeaders()});
+    if(!res.ok){ setToken(''); return; }
+    const data=await res.json();
+    SESSION={user:data.user.username, display:data.user.display_name, role:data.user.role};
+    if(!READ_BY_USER[SESSION.user]) READ_BY_USER[SESSION.user]=new Set();
+    document.getElementById('loginScreen').style.display='none';
+    document.getElementById('shell').classList.add('show');
+    bootApp();
+  }catch(e){ setToken(''); }
+}
+document.addEventListener('DOMContentLoaded',()=>{ renderStaticIcons(); tryRestore(); });
 </script>
 </body>
 </html>
