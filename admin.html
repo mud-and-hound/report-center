@@ -578,15 +578,8 @@ const READ_BY_USER={
   admin01:new Set(),
   audit_jane:new Set(),
 };
-/* activity log (mockup) */
-let LOGS=[
-  {user:'dev',action:'login',target:'',time:'15/06/2026 14:32:10',ip:'10.8.1.45'},
-  {user:'admin01',action:'login',target:'',time:'14/06/2026 18:05:33',ip:'10.8.1.88'},
-  {user:'admin01',action:'view',target:'CASE-2026-1042',dup:2,time:'14/06/2026 18:06:01',ip:'10.8.1.88'},
-  {user:'unknown',action:'fail',target:'',time:'14/06/2026 17:51:02',ip:'203.150.x.x'},
-  {user:'audit_jane',action:'view',target:'CASE-2026-1035',time:'13/06/2026 10:24:18',ip:'10.8.1.62'},
-  {user:'dev',action:'view',target:'CASE-2026-1038',time:'12/06/2026 09:15:40',ip:'10.8.1.45'},
-];
+/* activity log (ดึงจาก DB — ดู loadLogs) */
+let LOGS=[];
 /* นับจำนวนครั้งเปิดเคสซ้ำ ต่อ user|case */
 const VIEW_COUNT={};
 
@@ -648,7 +641,7 @@ function switchPage(p){
   const nav=document.getElementById('nav'+cap);
   if(nav) nav.classList.add('active');
   if(p==='reports'){renderInbox();}
-  if(p==='logs'){renderLogs();}
+  if(p==='logs'){loadLogs();}
   if(p==='users'){loadUsers();}
   if(window.innerWidth<=760) closeSidebarOnly();
 }
@@ -723,7 +716,7 @@ function openReport(id){
   const key=SESSION.user+'|'+r.case;
   VIEW_COUNT[key]=(VIEW_COUNT[key]||0)+1;
   const dup=VIEW_COUNT[key];
-  pushLog('view',r.case, dup>1?{dup}:null);
+  apiFetch('/reports/'+id+'/view',{method:'POST'}).catch(()=>{});
 
   const mapsLink=(r.lat!=null&&r.lng!=null)
     ? `<a href="https://www.google.com/maps?q=${r.lat},${r.lng}" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:none">${r.lat}, ${r.lng} ↗</a>`
@@ -879,37 +872,63 @@ async function deleteUser(idx){
 const ACT={
   login:{label:'เข้าสู่ระบบ',cls:'act-login',ico:'logout'},
   logout:{label:'ออกจากระบบ',cls:'act-logout',ico:'logout'},
+  login_fail:{label:'เข้าระบบล้มเหลว',cls:'act-fail',ico:'square-exclamation'},
   view:{label:'เปิดดูเคส',cls:'act-view',ico:'eye'},
-  fail:{label:'เข้าระบบล้มเหลว',cls:'act-fail',ico:'square-exclamation'},
-  adduser:{label:'เพิ่มผู้ใช้',cls:'act-login',ico:'add'},
-  edituser:{label:'แก้ไขผู้ใช้',cls:'act-view',ico:'pencil'},
-  deluser:{label:'ลบผู้ใช้',cls:'act-fail',ico:'trash'},
+  add_user:{label:'เพิ่มผู้ใช้',cls:'act-login',ico:'add'},
+  edit_user:{label:'แก้ไขผู้ใช้',cls:'act-view',ico:'pencil'},
+  delete_user:{label:'ลบผู้ใช้',cls:'act-fail',ico:'trash'},
 };
 function setLogFilter(f){
   LOGFILTER=f;
   ['All','View','Auth'].forEach(x=>document.getElementById('lseg'+x).classList.toggle('on',f===x.toLowerCase()));
   renderLogs();
 }
+function fmtLogTime(iso){
+  if(!iso) return '—';
+  const d=new Date(iso);
+  if(isNaN(d.getTime())) return esc(iso);
+  const p=n=>String(n).padStart(2,'0');
+  return `${p(d.getDate())}/${p(d.getMonth()+1)}/${d.getFullYear()} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+}
+async function loadLogs(){
+  const tb=document.getElementById('logTbody');
+  if(tb) tb.innerHTML=`<tr><td colspan="5" style="text-align:center;color:var(--fg4);padding:30px">กำลังโหลด…</td></tr>`;
+  try{
+    const res=await apiFetch('/admin/logs?limit=300');
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    const data=await res.json();
+    LOGS=(data.logs||[]).map(l=>({
+      user:l.username||'—', display:l.display_name,
+      action:l.action, target:l.target||'',
+      time:fmtLogTime(l.created_at), ip:l.ip||'—'
+    }));
+    renderLogs();
+  }catch(e){
+    if(e.message==='unauthorized') return;
+    if(tb) tb.innerHTML=`<tr><td colspan="5" style="text-align:center;color:var(--danger);padding:30px">โหลดไม่สำเร็จ: ${esc(e.message)}</td></tr>`;
+  }
+}
 function renderLogs(){
   const q=(document.getElementById('searchLogs').value||'').toLowerCase();
   let list=LOGS.filter(l=>{
     if(LOGFILTER==='view' && l.action!=='view') return false;
-    if(LOGFILTER==='auth' && !(l.action==='login'||l.action==='logout'||l.action==='fail')) return false;
-    if(q){const blob=(l.user+' '+(ACT[l.action]?ACT[l.action].label:'')+' '+l.target).toLowerCase();if(!blob.includes(q))return false;}
+    if(LOGFILTER==='auth' && !(l.action==='login'||l.action==='logout'||l.action==='login_fail')) return false;
+    if(q){const blob=(l.user+' '+(l.display||'')+' '+(ACT[l.action]?ACT[l.action].label:'')+' '+l.target).toLowerCase();if(!blob.includes(q))return false;}
     return true;
   });
   document.getElementById('logCount').textContent=list.length+' รายการ';
-  document.getElementById('logTbody').innerHTML=list.map(l=>{
+  document.getElementById('logTbody').innerHTML=list.length?list.map(l=>{
     const a=ACT[l.action]||{label:l.action,cls:'act-logout',ico:'list'};
-    const failAv=l.action==='fail';
+    const failAv=l.action==='login_fail';
+    const nm=l.display||l.user;
     return `<tr>
-      <td><div class="u-name"><span class="u-av" style="${failAv?'background:linear-gradient(135deg,var(--danger),#f87171)':''}">${esc(l.user.charAt(0).toUpperCase())}</span>${esc(l.user)}</div></td>
+      <td><div class="u-name"><span class="u-av" style="${failAv?'background:linear-gradient(135deg,var(--danger),#f87171)':''}">${esc((nm||'?').charAt(0).toUpperCase())}</span>${esc(nm)}</div></td>
       <td><span class="act-pill ${a.cls}">${ic(a.ico)} ${a.label}</span></td>
-      <td>${l.target?`<b>${esc(l.target)}</b>${l.dup&&l.dup>1?`<span class="dup-badge">เปิดซ้ำ ${l.dup} ครั้ง</span>`:''}`:'<span style="color:var(--fg4)">—</span>'}</td>
+      <td>${l.target?`<b>${esc(l.target)}</b>`:'<span style="color:var(--fg4)">—</span>'}</td>
       <td style="color:var(--fg3);white-space:nowrap">${esc(l.time)}</td>
       <td style="color:var(--fg3);font-family:monospace;font-size:12px">${esc(l.ip)}</td>
     </tr>`;
-  }).join('');
+  }).join(''):`<tr><td colspan="5" style="text-align:center;color:var(--fg4);padding:30px">ยังไม่มีบันทึกกิจกรรม</td></tr>`;
 }
 
 /* ═══════════ lightbox / theme / sidebar ═══════════ */
