@@ -1581,7 +1581,7 @@ const res = await fetch(CONFIG.apiEndpoint, {
 
     await minWait;
     document.getElementById('summaryModal').classList.add('hidden');
-    submitReport(caseNo);
+    submitReport(data.case||caseNo);
   }catch(err){
     await minWait;
     document.getElementById('modalSubmitting').classList.add('hidden');
