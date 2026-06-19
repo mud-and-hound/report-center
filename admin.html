@@ -264,6 +264,16 @@ input{font-family:inherit}
 .st-closed{background:var(--bg4);color:var(--fg3)}
 .btn-refresh{display:flex;align-items:center;gap:6px;background:var(--bg2);border:1px solid var(--border);border-radius:11px;padding:0 16px;font-size:12.5px;font-weight:500;color:var(--fg3);transition:background .15s,color .15s}
 .btn-refresh:hover{background:var(--bg3);color:var(--accent)}
+/* ── ปฏิทินกรองวันที่ ── */
+.date-range{display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:var(--bg2);border:1px solid var(--border);border-radius:11px;padding:8px 12px;margin-bottom:14px;font-size:12.5px;color:var(--fg3)}
+.date-range .dr-ico{display:flex;color:var(--accent)}
+.date-range .dr-ico .rhi{width:15px;height:15px}
+.date-range input[type=date]{border:1px solid var(--border);border-radius:8px;padding:6px 9px;font-family:inherit;font-size:12.5px;background:var(--bg3);color:var(--fg);outline:none}
+.date-range input[type=date]:focus{border-color:var(--accent)}
+.dr-sep{color:var(--fg4)}
+.dr-clear{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:6px 11px;font-size:12px;color:var(--fg3);display:inline-flex;align-items:center;gap:4px;cursor:pointer}
+.dr-clear:hover{background:var(--bg4);color:var(--danger)}
+.dr-count{color:var(--accent);font-weight:500;margin-left:auto}
 </style>
 </head>
 <body>
@@ -344,6 +354,14 @@ input{font-family:inherit}
             <button id="segUnread" onclick="setFilter('unread')">ยังไม่อ่าน</button>
           </div>
           <button class="btn-refresh" onclick="loadReports()">โหลดใหม่</button>
+        </div>
+        <div class="date-range">
+          <span class="dr-ico" id="drIco"></span>
+          <input type="date" id="dateFrom" onchange="setDateRange()" title="จากวันที่">
+          <span class="dr-sep">ถึง</span>
+          <input type="date" id="dateTo" onchange="setDateRange()" title="ถึงวันที่">
+          <button class="dr-clear" id="drClear" onclick="clearDateRange()" style="display:none">ล้าง</button>
+          <span class="dr-count" id="drCount"></span>
         </div>
         <div class="mail-list" id="mailList"></div>
       </section>
@@ -532,6 +550,7 @@ function mapReport(row){
     files: row.files_count||0,
     status: row.status||'new',
     created: fmtDate(row.created_at),
+    cdate: (row.created_at||'').slice(0,10),
   };
 }
 
@@ -681,9 +700,13 @@ function renderInbox(){
   const q=(document.getElementById('searchReports').value||'').toLowerCase();
   let list=REPORTS.filter(r=>{
     if(FILTER==='unread' && isRead(r.id)) return false;
+    if(DATE_FROM && r.cdate && r.cdate < DATE_FROM) return false;
+    if(DATE_TO && r.cdate && r.cdate > DATE_TO) return false;
     if(q){const blob=(r.case+' '+r.detail+' '+r.location+' '+(r.tel||'')+' '+(r.email||'')+' '+(r.name||'')).toLowerCase();if(!blob.includes(q))return false;}
     return true;
   });
+  const drc=document.getElementById('drCount');
+  if(drc) drc.textContent=(DATE_FROM||DATE_TO)?`พบ ${list.length} เคส`:'';
   const el=document.getElementById('mailList');
   if(!list.length){el.innerHTML=`<div class="empty">ไม่พบรายการ</div>`;return;}
   el.innerHTML=list.map(r=>{
@@ -1015,6 +1038,25 @@ async function tryRestore(){
   }catch(e){ setToken(''); }
 }
 document.addEventListener('DOMContentLoaded',()=>{ renderStaticIcons(); tryRestore(); });
+
+/* ── ปฏิทินกรองวันที่ ── */
+let DATE_FROM='', DATE_TO='';
+function setDateRange(){
+  DATE_FROM=document.getElementById('dateFrom').value||'';
+  DATE_TO=document.getElementById('dateTo').value||'';
+  document.getElementById('drClear').style.display=(DATE_FROM||DATE_TO)?'inline-flex':'none';
+  renderInbox();
+}
+function clearDateRange(){
+  DATE_FROM='';DATE_TO='';
+  document.getElementById('dateFrom').value='';
+  document.getElementById('dateTo').value='';
+  document.getElementById('drClear').style.display='none';
+  renderInbox();
+}
+document.addEventListener('DOMContentLoaded',()=>{
+  const di=document.getElementById('drIco'); if(di) di.innerHTML=ic('calendar-day',15);
+});
 </script>
 </body>
 </html>
